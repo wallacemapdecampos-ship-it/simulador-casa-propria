@@ -341,6 +341,10 @@ label.f>input:focus,label.f>select:focus{border-color:var(--accent);outline:2px 
 .cron-h{color:var(--fg)}
 .low{background:var(--warn-soft);color:var(--warn)}
 @media print{.top{background:#182635!important}.top .steps{display:none!important}aside h2{background:#182635!important}}
+.embed .top,.embed .sub{display:none!important}
+.embed body{background:var(--bg)}
+.embed .wrap{padding-top:4px}
+@media print{.embed .top{display:block!important}}
 </style>
 </head>
 <body>
@@ -530,6 +534,7 @@ label.f>input:focus,label.f>select:focus{border-color:var(--accent);outline:2px 
 </div></div>
 
 <script>
+if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed');
 (function(){
 const $=id=>document.getElementById(id);
 const BRL=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -561,7 +566,8 @@ const STEPS=[...document.querySelectorAll('.step')];
 let cur=1, mensal=false, maxReached=1;
 const nav=$('stepsNav');
 function paintNav(){const nm=STEPS[cur-1].dataset.name;$('stepTitle').textContent='Simulador – '+nm;nav.innerHTML=STEPS.map(s=>{const n=+s.dataset.step;return `<li class="${n===cur?'cur':n<cur?'done':''}">${s.dataset.name}</li>`}).join('');}
-function show(n){cur=n;maxReached=Math.max(maxReached,n);$('params').hidden=true;STEPS.forEach(s=>s.hidden=+s.dataset.step!==n);paintNav();update();window.scrollTo({top:0});}
+let showErr=false;
+function show(n){showErr=false;cur=n;maxReached=Math.max(maxReached,n);$('params').hidden=true;STEPS.forEach(s=>s.hidden=+s.dataset.step!==n);paintNav();update();window.scrollTo({top:0});}
 
 for(let i=1;i<=10;i++)$('qtd').insertAdjacentHTML('beforeend',`<option>${i}</option>`);
 function fillSis(){const o=$('origemSel').value,v=$('sisSel').value;const ops=o==='FGTS'?[['SAC','893 - SAC FGTS'],['PRICE','894 - PRICE FGTS']]:[['SAC','SAC'],['PRICE','PRICE']];$('sisSel').innerHTML=ops.map(([a,b])=>`<option value="${a}">${b}</option>`).join('');$('sisSel').value=v||'SAC';}
@@ -758,7 +764,7 @@ function update(){
   $('resumo').innerHTML=rs.map(([a,b])=>`<div><dt><a href="#" data-go="${goStep(a)}">${a}</a></dt><dd>${b}</dd></div>`).join('');
   // barra
   const err=stepError(cur,s,R);
-  $('back').disabled=cur===1; $('next').hidden=cur===7; $('printBtn').hidden=cur!==7; $('next').disabled=!!err; $('barMsg').textContent=err;
+  $('back').disabled=cur===1; $('next').hidden=cur===7; $('printBtn').hidden=cur!==7; $('next').disabled=false; $('barMsg').textContent=showErr?err:'';
   $('next').textContent='Avançar';
 }
 
@@ -822,7 +828,7 @@ $('printBtn').onclick=()=>window.print();
 $('toggle').onclick=()=>{mensal=!mensal;if(lastR)drawTable(lastR);};
 $('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();};
 
-$('next').onclick=()=>{if(cur<7)show(cur+1);};
+$('next').onclick=()=>{if(cur>=7)return;const s=read(),err=stepError(cur,s,compute(s));if(err){showErr=true;$('barMsg').textContent=err;return;}show(cur+1);};
 $('back').onclick=()=>{if(cur>1)show(cur-1);};
 $('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;buildCron(36);maxReached=1;show(1);};
 document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
