@@ -245,6 +245,26 @@ label.f>.w-l{max-width:375px}label.f>.w-s{max-width:210px}label.f>.w-xs{max-widt
 label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justify-self:start}
 @media (max-width:640px){label.f{grid-template-columns:minmax(0,1fr)}}
 .low{display:inline-block;margin-left:6px;padding:0 6px;border-radius:2px;background:var(--warn-soft);color:var(--warn);font-size:.85em}
+
+/* ---- Impressão no formato do detalhamento ---- */
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  html{font-size:11px}
+  body{background:#fff;padding:0}
+  .top,.bar,#openParams,.adj,#detObra,#chart,.legend,.scroll,#toggle,#tblTitle,.reset,.steps{display:none!important}
+  .detail-extra{display:none!important}
+  .sub{background:none;border:0}
+  .sub .crumb{font-size:10px}
+  .titlebar{background:none;padding-block:4px;margin:0}
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;padding-top:6px}
+  aside.panel{margin-top:0;box-shadow:none;position:static;border:1px solid #999;break-inside:avoid}
+  aside h2{background:#1f3a66!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main.panel{padding:0}
+  .step{animation:none}
+  .kpis{break-inside:avoid}
+  .foot{display:block!important;margin-top:10px}
+  .alert{display:none}
+}
 </style>
 </head>
 <body>
@@ -349,15 +369,15 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
         <dl class="det" id="detVista"></dl>
         <h3>Componentes da prestação</h3>
         <dl class="det" id="detComp"></dl>
-        <h3>Alterar prazo/entrada</h3>
+        <h3 class="detail-extra">Alterar prazo/entrada</h3>
         <div class="adj">
           <label class="f" for="prazoAlt">Prazo (meses)<input id="prazoAlt" inputmode="numeric"></label>
           <label class="f" for="entAlt">Entrada desejada<input id="entAlt" inputmode="decimal" placeholder="mínima"></label>
           <button type="button" class="btn small" id="clearAlt">Voltar ao máximo</button>
         </div>
-        <h3>Fase de obra</h3>
+        <h3 class="detail-extra">Fase de obra</h3>
         <dl class="det" id="detObra"></dl>
-        <h3>Prestação ao longo do contrato</h3>
+        <h3 class="detail-extra">Prestação ao longo do contrato</h3>
         <div class="legend"><span><i style="background:var(--accent)"></i>Prestação total</span><span><i style="background:var(--juros)"></i>Parte que é juros</span></div>
         <div id="chart"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
@@ -424,6 +444,7 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
 <div class="bar"><div class="in">
   <button type="button" class="btn" id="back">Voltar</button>
   <button type="button" class="btn primary" id="next">Avançar</button>
+  <button type="button" class="btn" id="printBtn" hidden>Imprimir</button>
   <span class="msg" id="barMsg"></span>
 </div></div>
 
@@ -486,7 +507,7 @@ function buildParts(){
   let h='';for(let i=0;i<q;i++){const def=old[i]||{p:(100/q).toFixed(2).replace('.',','),d:''};
     h+=`<div class="part"><div class="who">Participante ${i+1}</div>
     <label class="f">% de pactuação<input class="pp" id="pp${i}" inputmode="decimal" value="${q===1?'100':def.p}"></label>
-    <label class="f">Data de nascimento<input class="pd" id="pd${i}" type="date" value="${def.d}"></label></div>`;}
+    <label class="f">Data de nascimento<input class="pd" id="pd${i}" inputmode="numeric" maxlength="10" autocomplete="off" value="${def.d}"></label></div>`;}
   box.innerHTML=h;
 }
 buildParts();
@@ -500,9 +521,24 @@ function cityInfo(v){
   const uf=m&&UFS[m[2].toUpperCase()]?m[2].toUpperCase():'SP';
   return{cidade:m?m[1]:String(v).trim(),uf,pop:NaN,porte:'p300',cidadeOk:!Object.keys(CID).length&&!!m};
 }
+function toISO(v){
+  v=String(v||'').trim();
+  let m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(m)return v;
+  m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m)return '';
+  const [_,dd,mm,yy]=m, dt=new Date(`${yy}-${mm}-${dd}T12:00:00`);
+  return (dt.getDate()===+dd&&dt.getMonth()+1===+mm)?`${yy}-${mm}-${dd}`:'';
+}
+function maskDate(el){
+  let v=el.value.trim(), m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m)v=m[3]+m[2]+m[1];
+  const d=v.replace(/\D/g,'').slice(0,8);
+  const out=d.length>4?`${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`:d.length>2?`${d.slice(0,2)}/${d.slice(2)}`:d;
+  if(out!==el.value)el.value=out;
+}
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pd'))maskDate(e.target);},true);
 function read(){
   const today=new Date();
-  const parts=[...document.querySelectorAll('.part')].map(r=>{const d=r.querySelector('.pd').value;let age=NaN;
+  const parts=[...document.querySelectorAll('.part')].map(r=>{const d=toISO(r.querySelector('.pd').value);let age=NaN;
     let ageM=NaN;
     if(d){const b=new Date(d+'T12:00:00');age=(today-b)/(365.2425*864e5);ageM=(today.getFullYear()-b.getFullYear())*12+(today.getMonth()-b.getMonth())-(today.getDate()<b.getDate()?1:0);}
     return{p:num(r.querySelector('.pp').value),d,age,ageM};});
@@ -597,7 +633,7 @@ function compute(s){
 function stepError(n,s,R){
   if(n===2){if(!s.cidadeOk)return'Escolha a cidade na lista (ex.: Tatuí - SP).';if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';}
   if(n===3){const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);if(Math.abs(sum-100)>0.01)return`A pactuação soma ${sum.toLocaleString('pt-BR')}%; precisa dar 100%.`;
-    if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos.';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
+    if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos (dd/mm/aaaa).';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
   if(n===4&&R.block)return'Sem enquadramento para estes dados.';
   if(n===6&&!(s.obra>=0&&s.obra<=36))return'Prazo de obra entre 0 e 36 meses.';
   return'';
@@ -630,7 +666,7 @@ function update(){
   $('resumo').innerHTML=rs.map(([a,b])=>`<div><dt><a href="#" data-go="${goStep(a)}">${a}</a></dt><dd>${b}</dd></div>`).join('');
   // barra
   const err=stepError(cur,s,R);
-  $('back').disabled=cur===1; $('next').hidden=cur===7; $('next').disabled=!!err; $('barMsg').textContent=err;
+  $('back').disabled=cur===1; $('next').hidden=cur===7; $('printBtn').hidden=cur!==7; $('next').disabled=!!err; $('barMsg').textContent=err;
   $('next').textContent=cur===6?'Calcular':'Avançar';
 }
 
@@ -688,6 +724,7 @@ function drawTable(R){
   $('toggle').textContent=mensal?'Ver por ano':'Ver mês a mês';
 }
 $('resumo').addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(!a)return;e.preventDefault();const n=+a.dataset.go;if(n<=maxReached)show(n);});
+$('printBtn').onclick=()=>window.print();
 $('toggle').onclick=()=>{mensal=!mensal;if(lastR)drawTable(lastR);};
 $('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();};
 
