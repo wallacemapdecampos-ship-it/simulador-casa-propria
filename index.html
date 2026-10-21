@@ -182,6 +182,44 @@ aside dd{display:inline;color:var(--fg)}
 .bar .btn:hover:not(:disabled){filter:brightness(.95)}
 .steps li.cur{background:var(--brand);border-color:var(--brand);color:#fff}
 .steps li.done{color:var(--brand-ink)}
+
+/* ---- Visual de sistema ---- */
+body{font-family:Arial,"Segoe UI",Helvetica,sans-serif;font-size:13.5px;background:var(--panel)}
+.top .in{padding-block:10px}
+.brand b{font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:1.4rem;letter-spacing:.01em}
+.brand small{display:none}
+.steps{display:none}
+.wrap{max-width:none;padding-top:0;gap:0}
+.titlebar{background:linear-gradient(180deg,var(--panel),var(--sub));padding-block:14px;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)))}
+h1{font-size:1.45rem}
+.grid{grid-template-columns:minmax(0,1fr) 400px;gap:24px;padding-top:20px}
+main.panel{border:0;padding:8px 0 24px}
+main.panel .step{border-top:1px solid var(--line);padding-top:18px}
+label.f{grid-template-columns:230px minmax(0,380px);font-size:.95rem;color:var(--muted)}
+label.f>input,label.f>select{font-size:.95rem;padding:4px 6px;border:1px solid #b9c2cc;border-radius:0}
+.checks{padding-left:246px;gap:14px}
+.checks label{font-size:.95rem;color:var(--muted);align-items:center}
+.checks input{margin-top:0}
+.checks .hint{margin-top:-8px}
+.enqtit{margin:0;color:var(--muted);font-size:.95rem}
+dl.det{border-top:0;grid-template-columns:minmax(0,360px) minmax(0,1fr);max-width:900px}
+dl.det dt,dl.det dd{border-bottom:0;padding:2px 0;font-size:.95rem}
+dl.det dd{text-align:left;font-family:Arial,Helvetica,sans-serif;padding-left:0}
+dl.det.pt dt{padding-left:4px}
+#detVista dt:last-of-type,#detComp dt:last-of-type,#detVista dd:last-of-type,#detComp dd:last-of-type{font-weight:700}
+.kpis{background:none;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);gap:0;margin-top:10px}
+.kpis div{background:none;padding:10px 4px}
+.kpis .k{font-size:1rem}
+.kpis .v,.kpis .v.main{font-size:1rem;font-weight:400;color:var(--fg);margin-top:8px}
+h3{font-size:1rem;margin-top:10px}
+aside.panel{margin-top:-62px;box-shadow:0 1px 4px rgba(0,0,0,.18);position:relative;z-index:3}
+@media (max-width:900px){aside.panel{margin-top:0}}
+aside h2{text-transform:uppercase;font-size:1rem;padding:6px 8px}
+aside dl{font-size:.82rem;padding:8px}
+.bar{background:#f2f2f2;border-top:1px solid var(--line)}
+.bar .btn,.bar .btn.primary{background:var(--btn);color:var(--brand-ink);font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:.05em;font-size:.8rem;padding:6px 8px;min-width:0}
+.bar .in{max-width:none}
+@media (max-width:640px){.checks{padding-left:0}label.f{grid-template-columns:minmax(0,1fr)}dl.det{grid-template-columns:minmax(0,1fr) auto}}
 </style>
 </head>
 <body>
@@ -208,19 +246,16 @@ aside dd{display:inline;color:var(--fg)}
       <!-- 1 -->
       <section class="step" data-step="1" data-name="Início">
         <h2>Início</h2>
-        <div class="choice" role="radiogroup" aria-label="Origem de recursos">
-          <label><input type="radio" name="origem" id="o-fgts" value="FGTS" checked><span>FGTS<small>Minha Casa Minha Vida</small></span></label>
-          <label><input type="radio" name="origem" id="o-sbpe" value="SBPE"><span>SBPE<small>Crédito com recursos da poupança</small></span></label>
-        </div>
         <div class="fields">
+          <label class="f" for="origemSel">Origem de recursos<select id="origemSel"><option value="FGTS">FGTS - FUNDO DE GARANTIA POR TEMPO DE SERVIÇO</option><option value="SBPE">SBPE</option></select></label>
           <label class="f">Tipo de pessoa<select disabled><option>Física</option></select></label>
-          <label class="f">Categoria da pessoa<select disabled><option>Categoria 1 – Condições normais</option></select></label>
-          <label class="f">Tipo de financiamento<select disabled><option>Residencial urbano</option></select></label>
+          <label class="f">Categoria da pessoa<select disabled><option>CATEGORIA 1 - CONDIÇÕES NORMAIS</option></select></label>
+          <label class="f">Tipo de financiamento<select disabled><option>RESIDENCIAL URBANO</option></select></label>
           <label class="f" for="qtd">Quantidade de participantes<select id="qtd"></select></label>
         </div>
         <div class="checks" id="fgtsChecks">
-          <label><input type="checkbox" id="cotista">Possui 3 anos de trabalho sob o regime do FGTS, somando todos os períodos (reduz a taxa)</label>
-          <label><input type="checkbox" id="benef">Proponente já beneficiado com subsídio do FGTS após 16/05/05</label>
+          <label><input type="checkbox" id="cotista">Possui 3 anos de trabalho sob o regime do FGTS, somando-se todos os períodos trabalhados?</label>
+          <label><input type="checkbox" id="benef">Proponente já beneficiado com subsídio do FGTS após 16/05/05?</label>
         </div>
       </section>
 
@@ -228,7 +263,7 @@ aside dd{display:inline;color:var(--fg)}
       <section class="step" data-step="2" data-name="Imóvel" hidden>
         <h2>Imóvel</h2>
         <div class="fields">
-          <label class="f" style="grid-column:1/-1">Categoria do imóvel<select disabled><option>Construção/Aq. terreno const. – Im. planta e coletivas</option></select></label>
+          <label class="f" style="grid-column:1/-1">Categoria do imóvel<select disabled><option>CONSTRUÇÃO/AQ TER CONST - IM. PLANTA E COLETIVAS</option></select></label>
           <label class="f" for="cidade">Cidade<input id="cidade" style="font-family:var(--f-body)" value="Sorocaba"></label>
           <label class="f" for="uf">UF<select id="uf"></select><span class="hint">Norte e Nordeste têm juros 0,25 menor nas Faixas 1 e 2.</span></label>
           <label class="f" for="porte">Porte do município<select id="porte"></select><span class="hint">Define o teto das Faixas 1 e 2.</span></label>
@@ -256,22 +291,23 @@ aside dd{display:inline;color:var(--fg)}
       <!-- 5 -->
       <section class="step" data-step="5" data-name="Amortização" hidden>
         <h2>Sistema de amortização e apólice</h2>
-        <div class="choice" role="radiogroup" aria-label="Sistema de amortização">
-          <label><input type="radio" name="sis" id="s-price" value="PRICE" checked><span>PRICE<small>Parcela estável</small></span></label>
-          <label><input type="radio" name="sis" id="s-sac" value="SAC"><span>SAC<small>Começa maior e cai todo mês</small></span></label>
-        </div>
         <div class="fields">
-          <label class="f">Apólice<select disabled><option>68880 – Residencial habitacional</option></select></label>
-          <label class="f">Tipologia da unidade<select disabled><option>Apartamento</option></select></label>
+          <label class="f" for="sisSel">Selecione o sistema de amortização<select id="sisSel"></select></label>
+          <label class="f">Selecione a apólice<select disabled><option>68880 - RESIDENCIAL HABITACIONAL MCMV</option></select></label>
         </div>
-        <div class="checks" id="depBox"><label><input type="checkbox" id="dep">Possui dependentes. Com 1 participante e sem dependentes, a família é unipessoal e o desconto cai 70%.</label></div>
+        <div class="checks" id="depBox"><label><input type="checkbox" id="dep">Possui dependentes?</label><span class="hint">Com 1 participante e sem dependentes, a família é unipessoal e o desconto cai 70%.</span></div>
+        <div class="fields">
+          <label class="f">Selecione a tipologia de unidade<select disabled><option>Apartamento</option></select></label>
+          <label class="f">Área privativa<input value="0,00" disabled></label>
+        </div>
       </section>
 
       <!-- 6 -->
       <section class="step" data-step="6" data-name="Cronograma" hidden>
         <h2>Cronograma</h2>
         <div class="fields">
-          <label class="f" for="obra">Prazo de obra (meses)<input id="obra" inputmode="numeric" value="36"><span class="hint">Máximo 36 meses. Ajuste conforme o empreendimento.</span></label>
+          <label class="f">Prazo máximo<span style="text-align:left;color:var(--fg)">36 meses.</span></label>
+          <label class="f" for="obra">Quantidade de meses<input id="obra" inputmode="numeric" value="36"><span class="hint">Ajuste conforme o empreendimento.</span></label>
         </div>
       </section>
 
@@ -279,12 +315,18 @@ aside dd{display:inline;color:var(--fg)}
       <section class="step" data-step="7" data-name="Detalhamento" hidden>
         <h2>Detalhamento</h2>
         <div id="resAlert"></div>
+        <p class="enqtit" id="enqTit"></p>
+        <dl class="det pt" id="det"></dl>
         <div class="kpis">
-          <div><div class="k">Primeira prestação</div><div class="v main" id="kP1">–</div></div>
-          <div><div class="k">Juros nominais</div><div class="v" id="kJn">–</div></div>
-          <div><div class="k">Juros efetivos</div><div class="v" id="kJe">–</div></div>
+          <div><div class="k">Primeira Prestação</div><div class="v main" id="kP1">–</div></div>
+          <div><div class="k">Juros Nominais</div><div class="v" id="kJn">–</div></div>
+          <div><div class="k">Juros Efetivos</div><div class="v" id="kJe">–</div></div>
         </div>
-        <dl class="det" id="det"></dl>
+        <h3>Taxas a Vista</h3>
+        <dl class="det" id="detVista"></dl>
+        <h3>Componentes da prestação</h3>
+        <dl class="det" id="detComp"></dl>
+        <h3>Alterar prazo/entrada</h3>
         <div class="adj">
           <label class="f" for="prazoAlt">Prazo (meses)<input id="prazoAlt" inputmode="numeric"></label>
           <label class="f" for="entAlt">Entrada desejada<input id="entAlt" inputmode="decimal" placeholder="mínima"></label>
@@ -396,6 +438,8 @@ function paintNav(){const nm=STEPS[cur-1].dataset.name;$('stepTitle').textConten
 function show(n){cur=n;maxReached=Math.max(maxReached,n);$('params').hidden=true;STEPS.forEach(s=>s.hidden=+s.dataset.step!==n);paintNav();update();window.scrollTo({top:0});}
 
 for(let i=1;i<=10;i++)$('qtd').insertAdjacentHTML('beforeend',`<option>${i}</option>`);
+function fillSis(){const o=$('origemSel').value,v=$('sisSel').value;const ops=o==='FGTS'?[['SAC','893 - SAC FGTS'],['PRICE','894 - PRICE FGTS']]:[['SAC','SAC'],['PRICE','PRICE']];$('sisSel').innerHTML=ops.map(([a,b])=>`<option value="${a}">${b}</option>`).join('');$('sisSel').value=v||'SAC';}
+fillSis();$('origemSel').addEventListener('change',fillSis);
 $('uf').innerHTML=Object.keys(UFS).map(u=>`<option${u==='SP'?' selected':''}>${u}</option>`).join('');
 function fillPortes(){const v=$('porte').value||'p300';$('porte').innerHTML=Object.entries(PORTES).map(([k,t])=>`<option value="${k}">${t} · teto ${BRL(P.tetos[k])}</option>`).join('');$('porte').value=v;}
 fillPortes();
@@ -418,9 +462,9 @@ function read(){
     if(d){const b=new Date(d+'T12:00:00');age=(today-b)/(365.2425*864e5);}
     return{p:num(r.querySelector('.pp').value),d,age};});
   return{
-    origem:$('o-sbpe').checked?'SBPE':'FGTS', qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
+    origem:$('origemSel').value, qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
     cidade:$('cidade').value.trim()||'cidade', uf:$('uf').value, porte:$('porte').value, tetoCid:num($('tetoCid').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
-    parts, sis:$('s-sac').checked?'SAC':'PRICE', dep:$('dep').checked, obra:Math.round(num($('obra').value)),
+    parts, sis:$('sisSel').value, dep:$('dep').checked, obra:Math.round(num($('obra').value)),
     prazoAlt:Math.round(num($('prazoAlt').value)), entAlt:num($('entAlt').value)
   };
 }
@@ -551,13 +595,15 @@ function renderResult(s,R){
   if($('prazoAlt').value==='')$('prazoAlt').placeholder=String(R.prazoMax);
   const sum=k=>R.rows.reduce((a,r)=>a+r[k],0);
   const lines=[
-    ['Enquadramento',R.enq],['Valor do imóvel',BRL(s.valor)],['Prazo máximo',`${R.prazoMax} meses`],['Sistema de amortização',s.sis+(s.origem==='FGTS'?' FGTS':'')],
-    ['Cota máx. financiamento',`${R.cota}%`],['Valor de entrada',BRL(R.entrada)],['Desconto',BRL(R.desc)+(R.desc&&R.unip?' (unipessoal, −70%)':'')],['Prazo',`${R.n} meses`],
-    ['Valor de financiamento',BRL(R.fin)],['Limitado por',R.lim],
-    ['Composição da 1ª prestação',r1?`${BRL(r1.amort+r1.juros)} + seguros ${BRL(r1.mip+r1.dfi)}${R.adm?` + taxa ${BRL(R.adm)}`:''}`:'–'],
-    ['Última prestação',R.rows.length?BRL(R.rows[R.rows.length-1].total):'–'],
-    ['Total de juros no contrato',BRL(sum('juros'))],['Total de seguros e taxas',BRL(sum('mip')+sum('dfi')+sum('adm'))]
+    ['Valor do imóvel',BRL(s.valor)],['Prazo Máximo',`${R.prazoMax} meses`],['Sistema de Amortização',s.sis+(s.origem==='FGTS'?' FGTS':'')],
+    ['Cota máx. financiamento',`${R.cota}%`],['Valor de entrada',BRL(R.entrada)],['Desconto',BRL(R.desc)+(R.desc&&R.unip?' (unipessoal, −70%)':'')],
+    ['Prazo',`${R.n} meses`],['Valor de Financiamento',BRL(R.fin)],['Limitado por',R.lim],['Apólice de Seguro','68880']
   ];
+  $('enqTit').textContent=R.enq;
+  const segs=r1?r1.mip+r1.dfi:0;
+  $('detVista').innerHTML=[['Seguro à vista',BRL(segs)],['Tarifas',BRL(0)],['IOF',BRL(0)],['TOTAL',BRL(segs)]].map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+  $('detComp').innerHTML=r1?[['Amortização + Juros',BRL(r1.amort+r1.juros)],['Seguro DFI',BRL(r1.dfi)],['Seguro MIP',BRL(r1.mip)],['Total Seguros',BRL(segs)],
+    ['Taxa de administração',BRL(R.adm)],['Taxa de risco de crédito',BRL(0)],['Taxa operacional mensal',BRL(0)],['TOTAL',BRL(r1.total)]].map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join(''):'';
   $('det').innerHTML=lines.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
   const o=R.obraRows;
   $('detObra').innerHTML=o.length?[
