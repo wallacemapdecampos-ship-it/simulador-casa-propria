@@ -479,16 +479,16 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:11,
+  v:12,
   rates:[{ate:2000,t:4.75},{ate:2850,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4600,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2850, tr:0,
   tetos:{p750:264000,p300:270000,p100:225000,p0:210000}, tetoCidades:'Sorocaba - SP: 264000\nRibeirão Preto - SP: 264000\nCampo Grande - MS: 264000\nVotorantim - SP: 235000\nCatanduva - SP: 235000\nItu - SP: 225000\nLeme - SP: 225000\nItapetininga - SP: 223000\nAvaré - SP: 210000', t3:400000, t4:600000,
-  curva:'1750:51900, 1800:50507, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3400:2797, 3700:2050, 3969:1747, 4000:1720',
+  curva:'1750:51900, 1800:50900, 2000:45500, 2500:22660, 2660:17553, 2870:10700, 2916:9590, 3051:7703, 3200:5433, 3291:3697, 3400:2797, 3700:2050, 3970:1790, 4000:1750',
   zeraMin:false, subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==11)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==12)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
 const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.756],[45,2.54],[50,4.84],[55,7.865],[60,12.71],[65,24.2],[70,36.3],[200,54.5]];
