@@ -273,6 +273,13 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
   dl.det{grid-template-columns:minmax(0,1fr) minmax(0,1fr);max-width:none}
   .low{border:1px solid #c9a24a}
 }
+.f-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.f-row label.f{flex:0 1 auto}
+.btn.calc{background:var(--btn);color:var(--brand-ink);border:0;border-radius:2px;font-family:Georgia,"Times New Roman",serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.8rem}
+.cron{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.cron-h{padding-left:216px;font-weight:700;color:var(--brand-ink)}
+.cron label.f{grid-template-columns:200px minmax(0,1fr);text-align:left;padding-left:16px}
+@media (max-width:640px){.cron-h{padding-left:0}}
 </style>
 </head>
 <body>
@@ -358,7 +365,10 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
         <h2>Cronograma</h2>
         <div class="fields">
           <label class="f">Prazo máximo<span style="text-align:left;color:var(--fg)">36 meses.</span></label>
-          <label class="f" for="obra">Quantidade de meses<input id="obra" inputmode="numeric" value="36"><span class="hint">Ajuste conforme o empreendimento.</span></label>
+          <div class="f-row"><label class="f" for="obra">Quantidade de meses<input id="obra" class="w-s" inputmode="numeric" value="36"></label><button type="button" class="btn small calc" id="calcCron">Calcular</button></div>
+        </div>
+        <div class="cron" id="cron"></div>
+        <div class="fields" hidden>
         </div>
       </section>
 
@@ -422,6 +432,7 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
           <label class="f">Teto F1/F2 · 300 a 750 mil<input id="pT300"></label>
           <label class="f">Teto F1/F2 · 100 a 300 mil<input id="pT100"></label>
           <label class="f">Teto F1/F2 · menos de 100 mil<input id="pT0"></label>
+          <label class="f" style="grid-column:1/-1">Teto específico por cidade (uma por linha, ex.: <code>Leme - SP: 225000</code>)<textarea id="pTCid" rows="3" style="font:inherit;font-family:var(--f-mono);border:1px solid var(--line);padding:6px"></textarea></label>
           <label class="f">Teto Faixa 3<input id="pT3"></label>
           <label class="f">Teto Faixa 4<input id="pT4"></label>
         </div>
@@ -468,16 +479,16 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:7,
+  v:8,
   rates:[{ate:2000,t:4.75},{ate:2640,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4700,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2640, tr:0,
-  tetos:{p750:275000,p300:270000,p100:245000,p0:210000}, t3:400000, t4:600000,
+  tetos:{p750:275000,p300:270000,p100:225000,p0:210000}, tetoCidades:'', t3:400000, t4:600000,
   curva:'1750:51900, 1800:50507, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3400:2797, 3700:1900, 4000:1500',
   zeraMin:false, subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==7)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==8)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
 const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.66],[45,2.54],[50,4.84],[55,7.865],[60,12.71],[65,24.2],[70,36.3],[200,54.5]];
@@ -499,12 +510,12 @@ const fold=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().tr
 function useCities(list){CID={};list.forEach(([n,p])=>{CID[fold(n)]={nome:n,pop:p};});
   $('cidList').innerHTML=list.map(([n])=>`<option value="${n}">`).join('');update();}
 (async()=>{
-  try{const c=JSON.parse(localStorage.getItem('scp-cidades')||'null');if(c&&c.length>5000){useCities(c);return;}}catch(e){}
+  try{const c=JSON.parse(localStorage.getItem('scp-cidades25')||'null');if(c&&c.length>5000){useCities(c);return;}}catch(e){}
   try{
-    const r=await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
+    const r=await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2025/variaveis/9324?localidades=N6[all]');
     const j=await r.json();
-    const list=j[0].resultados[0].series.map(x=>[x.localidade.nome,+x.serie['2022']]).sort((a,b)=>a[0].localeCompare(b[0],'pt'));
-    try{localStorage.setItem('scp-cidades',JSON.stringify(list))}catch(e){}
+    const list=j[0].resultados[0].series.map(x=>[x.localidade.nome.replace(/ \(([A-Z]{2})\)$/,' - $1'),+x.serie['2025']]).sort((a,b)=>a[0].localeCompare(b[0],'pt'));
+    try{localStorage.setItem('scp-cidades25',JSON.stringify(list))}catch(e){}
     useCities(list);
   }catch(e){}
 })();
@@ -544,6 +555,15 @@ function maskDate(el){
   if(out!==el.value)el.value=out;
 }
 document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pd'))maskDate(e.target);},true);
+function tetoOverride(nome){
+  for(const ln of String(P.tetoCidades||'').split(/\n/)){const m=ln.match(/^(.*?):\s*([\d.,]+)\s*$/);if(m&&fold(m[1])===fold(nome)){const v=num(m[2]);if(isFinite(v))return v;}}
+  return 0;
+}
+function buildCron(n){
+  n=Math.max(1,Math.min(36,Math.round(n)||36));$('obra').value=n;
+  const base=Math.floor(100/n), last=100-base*(n-1);
+  $('cron').innerHTML='<div class="cron-h">% do Recurso</div>'+Array.from({length:n},(_,k)=>`<label class="f">Mês ${k+1}<input class="cp w-s" inputmode="decimal" value="${k===n-1?last:base}"></label>`).join('');
+}
 function read(){
   const today=new Date();
   const parts=[...document.querySelectorAll('.part')].map(r=>{const d=toISO(r.querySelector('.pd').value);let age=NaN;
@@ -553,7 +573,7 @@ function read(){
   return{
     origem:$('origemSel').value, qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
     ...cityInfo($('cidade').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
-    parts, sis:$('sisSel').value, dep:$('dep').checked, obra:Math.round(num($('obra').value)),
+    parts, sis:$('sisSel').value, dep:$('dep').checked, obra:document.querySelectorAll('#cron .cp').length, cron:[...document.querySelectorAll('#cron .cp')].map(i=>num(i.value)||0),
     prazoAlt:Math.round(num($('prazoAlt').value)), entAlt:num($('entAlt').value)
   };
 }
@@ -571,7 +591,8 @@ function compute(s){
   const R={alerts:[],block:null};
   const fgts=s.origem==='FGTS';
   R.faixa=fgts?faixaDe(s.renda):0;
-  const t12=P.tetos[s.porte], TETO={1:t12,2:t12,3:P.t3,4:P.t4};
+  const ov=tetoOverride(`${s.cidade} - ${s.uf}`);
+  const t12=ov||P.tetos[s.porte], TETO={1:t12,2:t12,3:P.t3,4:P.t4};
   R.reg=UFS[s.uf]; R.local=`${s.cidade} - ${s.uf}`;
   R.teto=fgts?(TETO[R.faixa]||0):Infinity;
   if(fgts){
@@ -623,7 +644,8 @@ function compute(s){
   if(isFinite(s.entAlt)&&s.entAlt>0&&s.entAlt<R.entrada-0.01)R.alerts.push(['warn',`A entrada mínima é ${BRL(R.entrada)}; valor menor não é aceito.`]);
   // Fase de obra
   R.obraRows=[];
-  for(let k=1;k<=obra;k++){const lib=k<obra?Math.min(fin,fin*0.02*k):fin, j=lib*i, mip=lib*R.mipW;R.obraRows.push({k,lib,juros:j,mip,dfi:R.dfiV,adm:R.adm,total:j+mip+R.dfiV+R.adm});}
+  let acum=0;
+  for(let k=1;k<=obra;k++){acum+=(s.cron[k-1]||0);const lib=Math.min(fin,fin*acum/100), j=lib*i, mip=lib*R.mipW;R.obraRows.push({k,lib,juros:j,mip,dfi:R.dfiV,adm:R.adm,total:j+mip+R.dfiV+R.adm});}
   // Amortização
   const rows=[];let saldo=fin;const tr=P.tr/100;
   for(let k=1;k<=n&&saldo>0.005;k++){
@@ -643,7 +665,7 @@ function stepError(n,s,R){
   if(n===3){const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);if(Math.abs(sum-100)>0.01)return`A pactuação soma ${sum.toLocaleString('pt-BR')}%; precisa dar 100%.`;
     if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos (dd/mm/aaaa).';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
   if(n===4&&R.block)return'Sem enquadramento para estes dados.';
-  if(n===6&&!(s.obra>=0&&s.obra<=36))return'Prazo de obra entre 0 e 36 meses.';
+  if(n===6){if(String(s.obra)!==String(Math.round(num($('obra').value))))return'Clique em Calcular para montar o cronograma.';const t=s.cron.reduce((x,y)=>x+y,0);if(Math.abs(t-100)>0.001)return`O cronograma soma ${t.toLocaleString('pt-BR')}%; precisa dar 100%.`;}
   return'';
 }
 
@@ -732,13 +754,15 @@ function drawTable(R){
   $('toggle').textContent=mensal?'Ver por ano':'Ver mês a mês';
 }
 $('resumo').addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(!a)return;e.preventDefault();const n=+a.dataset.go;if(n<=maxReached)show(n);});
+buildCron(36);
+$('calcCron').onclick=()=>{buildCron(num($('obra').value));update();};
 $('printBtn').onclick=()=>window.print();
 $('toggle').onclick=()=>{mensal=!mensal;if(lastR)drawTable(lastR);};
 $('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();};
 
 $('next').onclick=()=>{if(cur<7)show(cur+1);};
 $('back').onclick=()=>{if(cur>1)show(cur-1);};
-$('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;$('obra').value='36';maxReached=1;show(1);};
+$('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;buildCron(36);maxReached=1;show(1);};
 document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
 document.addEventListener('change',e=>{if(!$('params').contains(e.target))update();});
 ['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('blur',()=>{const v=num($(id).value);if(isFinite(v))$(id).value=money(v);}));
@@ -768,7 +792,7 @@ function renderParams(){
   $('pMip').value=String(P.mip).replace('.',',');$('pDfi').value=String(P.dfi).replace('.',',');$('pAdm').value=`${P.admF} / ${P.admS}`;$('pTr').value=String(P.tr).replace('.',',');
   $('pNne').value=String(P.nne).replace('.',',');$('pAdmI').value=money(P.admIsento);
   $('pT750').value=money(P.tetos.p750);$('pT300').value=money(P.tetos.p300);$('pT100').value=money(P.tetos.p100);$('pT0').value=money(P.tetos.p0);
-  $('pT3').value=money(P.t3);$('pT4').value=money(P.t4);
+  $('pT3').value=money(P.t3);$('pTCid').value=P.tetoCidades||'';$('pT4').value=money(P.t4);
   $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pZera').checked=!!P.zeraMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
 }
 function collectParams(){
@@ -780,7 +804,7 @@ function collectParams(){
   const ad=$('pAdm').value.split('/').map(num);if(isFinite(ad[0]))P.admF=ad[0];if(isFinite(ad[1]))P.admS=ad[1];
   g('pNne','nne');g('pAdmI','admIsento');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');P.zeraMin=$('pZera').checked;g('pUnip','unip');g('pSubR','subRendaMax');
   [['pT750','p750'],['pT300','p300'],['pT100','p100'],['pT0','p0']].forEach(([id,k])=>{const v=num($(id).value);if(isFinite(v))P.tetos[k]=v;});
-  P.curva=$('pCurva').value.trim();
+  P.curva=$('pCurva').value.trim();P.tetoCidades=$('pTCid').value;
   const sm=$('pSubMax').value.split('/').map(num);if(isFinite(sm[0]))P.subMax=sm[0];if(isFinite(sm[1]))P.subMaxN=sm[1];
 }
 $('openParams').onclick=()=>{$('stepTitle').textContent='Parâmetros';renderParams();STEPS.forEach(s=>s.hidden=true);$('params').hidden=false;$('barMsg').textContent='';$('next').hidden=true;$('back').disabled=true;};
