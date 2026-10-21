@@ -239,6 +239,7 @@ aside h2{font-size:1.05rem}
 .enqtit{font-size:1rem}
 .alert{font-size:.95rem;padding:8px 10px}
 @media (max-width:640px){.checks{padding-left:0}label.f{grid-template-columns:minmax(0,1fr)}}
+aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -619,7 +620,8 @@ function update(){
   if(maxReached>=3){rs.push(['Participantes',String(s.qtd)]);s.parts.forEach((p,j)=>{if(p.d)rs.push([`Participante ${j+1}`,`${(p.p||0).toLocaleString('pt-BR')}% · ${p.d.split('-').reverse().join('/')}`]);});}
   if(maxReached>=5)rs.push(['Sistema',s.sis+(s.origem==='FGTS'?' FGTS':'')]);
   if(maxReached>=6)rs.push(['Prazo de obra',`${R.obra} meses`]);
-  $('resumo').innerHTML=rs.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  const goStep=l=>/^Participante \d/.test(l)?3:({'Categoria do imóvel':2,'Cidade':2,'Valor do imóvel':2,'Prestação máxima – SIRIC':2,'Renda familiar':2,'Sistema':5,'Prazo de obra':6}[l]||1);
+  $('resumo').innerHTML=rs.map(([a,b])=>`<div><dt><a href="#" data-go="${goStep(a)}">${a}</a></dt><dd>${b}</dd></div>`).join('');
   // barra
   const err=stepError(cur,s,R);
   $('back').disabled=cur===1; $('next').hidden=cur===7; $('next').disabled=!!err; $('barMsg').textContent=err;
@@ -679,6 +681,7 @@ function drawTable(R){
   $('tblTitle').textContent=mensal?'Evolução mês a mês (inclui obra)':'Evolução por ano (após a obra)';
   $('toggle').textContent=mensal?'Ver por ano':'Ver mês a mês';
 }
+$('resumo').addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(!a)return;e.preventDefault();const n=+a.dataset.go;if(n<=maxReached)show(n);});
 $('toggle').onclick=()=>{mensal=!mensal;if(lastR)drawTable(lastR);};
 $('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();};
 
