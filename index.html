@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Simulador de financiamento habitacional FGTS (Minha Casa Minha Vida) e SBPE, etapa por etapa.">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Simulador Casa Própria</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: assistente em etapas à esquerda, quadro Resumo fixo à direita (desce para baixo no celular), barra Voltar/Avançar no rodapé */
+:root{
+  --bg:#eef3f5; --panel:#ffffff; --fg:#14242c; --muted:#5a6b74; --line:#d4dee3;
+  --accent:#11707a; --accent-ink:#ffffff; --accent-soft:#e1f0f1;
+  --brand:#15435a; --brand-2:#0e3245; --brand-ink:#164a60; --gold:#e6b84c;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --bad:#a3312b; --bad-soft:#f9e3e1; --ok:#1d7a3e; --ok-soft:#e2f3e7; --juros:#c27a1a;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e171b; --panel:#152126; --fg:#e3ebed; --muted:#92a4ab; --line:#29393f;
+  --accent:#4cc0c8; --accent-ink:#06232a; --accent-soft:#16363d;
+  --brand:#123546; --brand-2:#0b2532; --brand-ink:#9ad3de; --gold:#e6b84c;
+  --warn:#e3a54a; --warn-soft:#3a2c14; --bad:#ec7a72; --bad-soft:#3d1d1b; --ok:#5fcf86; --ok-soft:#173623; --juros:#e3a54a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e171b; --panel:#152126; --fg:#e3ebed; --muted:#92a4ab; --line:#29393f;
+  --accent:#4cc0c8; --accent-ink:#06232a; --accent-soft:#16363d;
+  --brand:#123546; --brand-2:#0b2532; --brand-ink:#9ad3de; --gold:#e6b84c;
+  --warn:#e3a54a; --warn-soft:#3a2c14; --bad:#ec7a72; --bad-soft:#3d1d1b; --ok:#5fcf86; --ok-soft:#173623; --juros:#e3a54a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0;padding-block:0 96px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px;padding-top:20px}
+.top{background:linear-gradient(180deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff}
+.top .in{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:1.35rem;letter-spacing:-.01em;line-height:1}
+.brand small{display:block;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;opacity:.75;font-weight:500;margin-top:3px}
+.top .acts{display:flex;gap:8px;flex-wrap:wrap}
+.top .acts button{font:inherit;font-size:.82rem;font-weight:600;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);border-radius:6px;padding:6px 12px;cursor:pointer}
+.top .acts button:hover{background:rgba(255,255,255,.18)}
+.sub{background:var(--panel);border-bottom:1px solid var(--line)}
+.sub .in{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:9px;flex-wrap:wrap}
+.crumb{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--brand-ink)}
+.titlebar{text-align:center;padding-block:4px 0}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(1.35rem,2.6vw,1.75rem);line-height:1.15;margin:0;color:var(--brand-ink);letter-spacing:-.005em;text-wrap:balance}
+.step>h2{display:none}
+.btn{font:inherit;font-weight:600;font-size:.9rem;border-radius:6px;padding:9px 16px;cursor:pointer;border:1px solid var(--accent);background:var(--panel);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{padding:5px 10px;font-size:.8rem}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.steps{display:flex;gap:4px;flex-wrap:wrap;list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;font-size:.74rem;font-weight:600;color:var(--muted);padding:3px 9px 3px 4px;border-radius:999px;display:flex;align-items:center;gap:6px}
+.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--bg);font-family:var(--f-mono);font-size:.7rem}
+.steps li.done{color:var(--accent)}
+.steps li.done::before{background:var(--accent-soft)}
+.steps li.cur{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.steps li.cur::before{background:var(--accent-ink);color:var(--accent)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px}
+.step{display:flex;flex-direction:column;gap:18px}
+.step h2{font-family:var(--f-display);font-weight:700;font-size:1.3rem;margin:0}
+.step .lead{color:var(--muted);margin:-10px 0 0;font-size:.9rem;max-width:64ch}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+@media (max-width:560px){.fields{grid-template-columns:minmax(0,1fr)}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.86rem;font-weight:500;min-width:0}
+input,select{font:inherit;font-family:var(--f-mono);font-size:.95rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+select{font-family:var(--f-body)}
+.hint{font-size:.76rem;color:var(--muted);font-weight:400}
+.choice{display:flex;gap:10px;flex-wrap:wrap}
+.choice label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;background:var(--bg);flex:1 1 180px}
+.choice label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.choice small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.checks{display:flex;flex-direction:column;gap:10px}
+.checks label{display:flex;gap:10px;align-items:flex-start;font-size:.92rem}
+.checks input{width:auto;margin-top:4px}
+.part{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:end;padding:10px 0;border-bottom:1px dashed var(--line)}
+.part:last-child{border-bottom:0}
+.part .who{font-weight:600;font-size:.9rem;padding-bottom:8px}
+@media (max-width:560px){.part{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.part .who{grid-column:1/-1;padding:0}}
+.alert{padding:12px 14px;border-radius:6px;font-size:.9rem;border-left:3px solid}
+.alert.warn{background:var(--warn-soft);border-color:var(--warn)}
+.alert.bad{background:var(--bad-soft);border-color:var(--bad)}
+.alert.ok{background:var(--ok-soft);border-color:var(--ok)}
+.alert b{font-weight:600}
+.enq{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-soft)}
+.enq .code{font-family:var(--f-mono);font-weight:500;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:2px 8px;white-space:nowrap}
+dl.det{display:grid;grid-template-columns:minmax(0,1fr) auto;margin:0;border-top:1px solid var(--line)}
+dl.det dt,dl.det dd{padding:7px 0;border-bottom:1px solid var(--line);margin:0}
+dl.det dt{color:var(--muted);font-size:.9rem}
+dl.det dd{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;padding-left:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media (max-width:560px){.kpis{grid-template-columns:minmax(0,1fr)}}
+.kpis div{background:var(--panel);padding:14px}
+.kpis .k{font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpis .v{font-family:var(--f-display);font-weight:700;font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpis .v.main{color:var(--accent)}
+h3{font-family:var(--f-display);font-weight:600;font-size:1.05rem;margin:4px 0 0}
+.adj{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;gap:12px;align-items:end;padding:14px;border:1px dashed var(--line);border-radius:8px}
+@media (max-width:560px){.adj{grid-template-columns:minmax(0,1fr)}}
+svg text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+.legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+.scroll{overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-family:var(--f-mono);font-size:.8rem;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--panel);font-family:var(--f-body);font-weight:600;font-size:.74rem;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+tbody tr:nth-child(even){background:var(--bg)}
+tr.obra td{color:var(--warn)}
+aside.panel{padding:0;overflow:hidden}
+@media (min-width:901px){aside.panel{position:sticky;top:16px}}
+aside h2{margin:0;padding:12px 16px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;background:var(--fg);color:var(--panel);font-family:var(--f-body);font-weight:600}
+aside dl{margin:0;padding:12px 16px;display:flex;flex-direction:column;gap:8px;font-size:.84rem}
+aside dt{color:var(--muted);font-size:.76rem}
+aside dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+aside .reset{padding:0 16px 14px}
+.linkbtn{font:inherit;font-size:.84rem;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);z-index:5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:1180px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .btn{text-transform:uppercase;letter-spacing:.06em;font-size:.82rem;min-width:110px}
+.bar .msg{font-size:.84rem;color:var(--bad);margin-left:auto;text-align:right}
+/* parâmetros */
+.params{display:flex;flex-direction:column;gap:18px}
+.ptable{overflow-x:auto}
+.ptable table{font-size:.85rem}
+.ptable td{padding:4px 6px}
+.ptable input{padding:5px 8px;font-size:.85rem;min-width:90px}
+.ptable td.wide input{min-width:180px}
+.foot{font-size:.8rem;color:var(--muted);max-width:90ch}
+@media (prefers-reduced-motion:no-preference){.step{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+</head>
+<body>
+
+
+<header class="top gut"><div class="in">
+  <a class="brand" href="#" onclick="return false" aria-label="Casa Própria">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="rgba(255,255,255,.14)"/><path d="M8 17.5 17 9.5l9 8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 16v9h12v-9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><rect x="15" y="19" width="4" height="6" fill="var(--gold)"/></svg>
+    <span><b>Casa Própria</b><small>Simulador habitacional</small></span>
+  </a>
+  <div class="acts"><button type="button" id="openParams">Parâmetros</button></div>
+</div></header>
+<div class="sub gut"><div class="in">
+  <span class="crumb">Simulação habitacional · FGTS e SBPE</span>
+  <ol class="steps" id="stepsNav"></ol>
+</div></div>
+
+<div class="wrap gut">
+  <div class="titlebar"><h1 id="stepTitle">Simulador</h1></div>
+
+  <div class="grid">
+    <main class="panel" id="main">
+
+      <!-- 1 -->
+      <section class="step" data-step="1" data-name="Início">
+        <h2>Início</h2>
+        <div class="choice" role="radiogroup" aria-label="Origem de recursos">
+          <label><input type="radio" name="origem" id="o-fgts" value="FGTS" checked><span>FGTS<small>Minha Casa Minha Vida</small></span></label>
+          <label><input type="radio" name="origem" id="o-sbpe" value="SBPE"><span>SBPE<small>Crédito com recursos da poupança</small></span></label>
+        </div>
+        <div class="fields">
+          <label class="f">Tipo de pessoa<select disabled><option>Física</option></select></label>
+          <label class="f">Categoria da pessoa<select disabled><option>Categoria 1 – Condições normais</option></select></label>
+          <label class="f">Tipo de financiamento<select disabled><option>Residencial urbano</option></select></label>
+          <label class="f" for="qtd">Quantidade de participantes<select id="qtd"></select></label>
+        </div>
+        <div class="checks" id="fgtsChecks">
+          <label><input type="checkbox" id="cotista">Possui 3 anos de trabalho sob o regime do FGTS, somando todos os períodos (reduz a taxa)</label>
+          <label><input type="checkbox" id="benef">Proponente já beneficiado com subsídio do FGTS após 16/05/05</label>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section class="step" data-step="2" data-name="Imóvel" hidden>
+        <h2>Imóvel</h2>
+        <div class="fields">
+          <label class="f" style="grid-column:1/-1">Categoria do imóvel<select disabled><option>Construção/Aq. terreno const. – Im. planta e coletivas</option></select></label>
+          <label class="f" for="cidade">Cidade<input id="cidade" style="font-family:var(--f-body)" value="Sorocaba"></label>
+          <label class="f" for="uf">UF<select id="uf"></select><span class="hint">Norte e Nordeste têm juros 0,25 menor nas Faixas 1 e 2.</span></label>
+          <label class="f" for="porte">Porte do município<select id="porte"></select><span class="hint">Define o teto das Faixas 1 e 2.</span></label>
+          <label class="f" for="tetoCid">Teto específico da cidade (opcional)<input id="tetoCid" inputmode="decimal" placeholder="usa o teto do porte"></label>
+          <label class="f" for="valor">Valor do imóvel<input id="valor" inputmode="decimal" placeholder="264.000,00"></label>
+          <label class="f" for="siric">Prestação máxima – SIRIC<input id="siric" inputmode="decimal" placeholder="750,00"><span class="hint">Em branco, usa 30% da renda.</span></label>
+          <label class="f" for="renda">Renda familiar mensal bruta<input id="renda" inputmode="decimal" placeholder="2.500,00"></label>
+        </div>
+      </section>
+
+      <!-- 3 -->
+      <section class="step" data-step="3" data-name="Participantes" hidden>
+        <h2>Participantes</h2>
+        <p class="lead">A pactuação precisa somar 100%. A idade de cada um entra no seguro, e o participante mais velho define o prazo máximo.</p>
+        <div id="parts"></div>
+        <div id="pactMsg"></div>
+      </section>
+
+      <!-- 4 -->
+      <section class="step" data-step="4" data-name="Enquadramento" hidden>
+        <h2>Enquadramento</h2>
+        <div id="enqBox"></div>
+      </section>
+
+      <!-- 5 -->
+      <section class="step" data-step="5" data-name="Amortização" hidden>
+        <h2>Sistema de amortização e apólice</h2>
+        <div class="choice" role="radiogroup" aria-label="Sistema de amortização">
+          <label><input type="radio" name="sis" id="s-price" value="PRICE" checked><span>PRICE<small>Parcela estável</small></span></label>
+          <label><input type="radio" name="sis" id="s-sac" value="SAC"><span>SAC<small>Começa maior e cai todo mês</small></span></label>
+        </div>
+        <div class="fields">
+          <label class="f">Apólice<select disabled><option>68880 – Residencial habitacional</option></select></label>
+          <label class="f">Tipologia da unidade<select disabled><option>Apartamento</option></select></label>
+        </div>
+        <div class="checks" id="depBox"><label><input type="checkbox" id="dep">Possui dependentes. Com 1 participante e sem dependentes, a família é unipessoal e o desconto cai 70%.</label></div>
+      </section>
+
+      <!-- 6 -->
+      <section class="step" data-step="6" data-name="Cronograma" hidden>
+        <h2>Cronograma</h2>
+        <div class="fields">
+          <label class="f" for="obra">Prazo de obra (meses)<input id="obra" inputmode="numeric" value="36"><span class="hint">Máximo 36 meses. Ajuste conforme o empreendimento.</span></label>
+        </div>
+      </section>
+
+      <!-- 7 -->
+      <section class="step" data-step="7" data-name="Detalhamento" hidden>
+        <h2>Detalhamento</h2>
+        <div id="resAlert"></div>
+        <div class="kpis">
+          <div><div class="k">Primeira prestação</div><div class="v main" id="kP1">–</div></div>
+          <div><div class="k">Juros nominais</div><div class="v" id="kJn">–</div></div>
+          <div><div class="k">Juros efetivos</div><div class="v" id="kJe">–</div></div>
+        </div>
+        <dl class="det" id="det"></dl>
+        <div class="adj">
+          <label class="f" for="prazoAlt">Prazo (meses)<input id="prazoAlt" inputmode="numeric"></label>
+          <label class="f" for="entAlt">Entrada desejada<input id="entAlt" inputmode="decimal" placeholder="mínima"></label>
+          <button type="button" class="btn small" id="clearAlt">Voltar ao máximo</button>
+        </div>
+        <h3>Fase de obra</h3>
+        <dl class="det" id="detObra"></dl>
+        <h3>Prestação ao longo do contrato</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Prestação total</span><span><i style="background:var(--juros)"></i>Parte que é juros</span></div>
+        <div id="chart"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3 id="tblTitle">Evolução por ano</h3>
+          <button type="button" class="btn small" id="toggle">Ver mês a mês</button>
+        </div>
+        <div class="scroll"><table id="tbl"></table></div>
+      </section>
+
+      <!-- Parâmetros -->
+      <section class="params" id="params" hidden>
+        <h2 style="font-family:var(--f-display);margin:0">Parâmetros</h2>
+        <p class="hint" style="margin:-8px 0 0;font-size:.85rem">Ficam salvos neste navegador. Ajuste quando sair portaria nova ou quando conferir um valor no sistema.</p>
+        <div>
+          <h3>Taxa de juros FGTS por renda (% a.a., sem redutor)</h3>
+          <div class="ptable"><table id="pRates"></table></div>
+        </div>
+        <div class="fields">
+          <label class="f">Redutor cotista (pontos %)<input id="pRed"></label>
+          <label class="f">Taxa SBPE (% a.a.)<input id="pSbpe"></label>
+          <label class="f">Cota máx. FGTS (%)<input id="pCotaF"></label>
+          <label class="f">Cota SBPE SAC / PRICE (%)<input id="pCotaS" placeholder="70 / 50"></label>
+          <label class="f">MIP até 25 anos (% a.m. do saldo)<input id="pMip"></label>
+          <label class="f">DFI (% a.m. do valor do imóvel)<input id="pDfi"></label>
+          <label class="f">Taxa adm. FGTS / SBPE (R$)<input id="pAdm" placeholder="0 / 25"></label>
+          <label class="f">TR projetada (% a.m.)<input id="pTr"></label>
+        </div>
+        <div class="fields">
+          <label class="f">Redução Norte/Nordeste F1–F2 (pontos %)<input id="pNne"></label>
+          <span></span>
+          <label class="f">Teto F1/F2 · mais de 750 mil hab.<input id="pT750"></label>
+          <label class="f">Teto F1/F2 · 300 a 750 mil<input id="pT300"></label>
+          <label class="f">Teto F1/F2 · 100 a 300 mil<input id="pT100"></label>
+          <label class="f">Teto F1/F2 · menos de 100 mil<input id="pT0"></label>
+          <label class="f">Teto Faixa 3<input id="pT3"></label>
+          <label class="f">Teto Faixa 4<input id="pT4"></label>
+        </div>
+        <div class="fields">
+          <label class="f" style="grid-column:1/-1">Curva do desconto, família com dependentes (renda:valor)<input id="pCurva" style="font-family:var(--f-mono)"><span class="hint">Pares separados por vírgula. O simulador interpola entre eles.</span></label>
+          <label class="f">Desconto máximo / máximo Norte (R$)<input id="pSubMax" placeholder="55000 / 65000"></label>
+          <label class="f">Desconto mínimo (R$)<input id="pSubMin"></label>
+          <label class="f">Redução unipessoal (%)<input id="pUnip"></label>
+          <label class="f">Renda máxima com desconto (R$)<input id="pSubR"></label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn primary" id="saveParams">Salvar e voltar</button>
+          <button type="button" class="btn" id="resetParams">Restaurar padrão</button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="panel">
+      <h2>Resumo</h2>
+      <dl id="resumo"></dl>
+      <div class="reset"><button type="button" class="linkbtn" id="nova">Nova simulação</button></div>
+    </aside>
+  </div>
+
+  <p class="foot">Estimativa para atendimento e planejamento. Não substitui a simulação oficial do agente financeiro. Taxas, tetos, descontos e seguros seguem os parâmetros configurados e podem diferir do sistema.</p>
+</div>
+
+<div class="bar"><div class="in">
+  <button type="button" class="btn" id="back">Voltar</button>
+  <button type="button" class="btn primary" id="next">Avançar</button>
+  <span class="msg" id="barMsg"></span>
+</div></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const BRL=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const PCT=(v,d=4)=>v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+function num(s){s=String(s??'').trim().replace(/[^\d,.\-]/g,'');if(!s)return NaN;
+  if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if((s.match(/\./g)||[]).length>1||/\.\d{3}$/.test(s))s=s.replace(/\./g,'');
+  const n=parseFloat(s);return isFinite(n)?n:NaN;}
+const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ---------- Parâmetros ---------- */
+const DEF={
+  v:2,
+  rates:[{ate:2000,t:4.75},{ate:2640,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4700,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
+  red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:0, admS:25, tr:0,
+  tetos:{p750:275000,p300:270000,p100:245000,p0:230000}, t3:400000, t4:600000,
+  curva:'1750:50000, 2000:45500, 2500:22660, 3000:9500, 3500:2200, 3700:1900, 4000:1500',
+  subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
+};
+let P;
+try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
+if(!P||P.v!==2)P=JSON.parse(JSON.stringify(DEF));
+const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
+const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
+const MIPF=[[25,1],[30,1.146],[35,1.406],[40,1.771],[45,2.708],[50,4.167],[55,6.771],[60,10.94],[65,20.83],[70,31.25],[200,46.88]];
+const mipRate=a=>{for(const[l,f]of MIPF)if(a<=l)return P.mip*f/100;return P.mip*46.88/100;};
+
+/* ---------- Estado e navegação ---------- */
+const STEPS=[...document.querySelectorAll('.step')];
+let cur=1, mensal=false, maxReached=1;
+const nav=$('stepsNav');
+function paintNav(){const nm=STEPS[cur-1].dataset.name;$('stepTitle').textContent='Simulador – '+nm;nav.innerHTML=STEPS.map(s=>{const n=+s.dataset.step;return `<li class="${n===cur?'cur':n<cur?'done':''}">${s.dataset.name}</li>`}).join('');}
+function show(n){cur=n;maxReached=Math.max(maxReached,n);$('params').hidden=true;STEPS.forEach(s=>s.hidden=+s.dataset.step!==n);paintNav();update();window.scrollTo({top:0});}
+
+for(let i=1;i<=10;i++)$('qtd').insertAdjacentHTML('beforeend',`<option>${i}</option>`);
+$('uf').innerHTML=Object.keys(UFS).map(u=>`<option${u==='SP'?' selected':''}>${u}</option>`).join('');
+function fillPortes(){const v=$('porte').value||'p300';$('porte').innerHTML=Object.entries(PORTES).map(([k,t])=>`<option value="${k}">${t} · teto ${BRL(P.tetos[k])}</option>`).join('');$('porte').value=v;}
+fillPortes();
+
+function buildParts(){
+  const q=+$('qtd').value, box=$('parts'), old=[...box.querySelectorAll('.part')].map(r=>({p:r.querySelector('.pp').value,d:r.querySelector('.pd').value}));
+  let h='';for(let i=0;i<q;i++){const def=old[i]||{p:(100/q).toFixed(2).replace('.',','),d:''};
+    h+=`<div class="part"><div class="who">Participante ${i+1}</div>
+    <label class="f">% de pactuação<input class="pp" id="pp${i}" inputmode="decimal" value="${q===1?'100':def.p}"></label>
+    <label class="f">Data de nascimento<input class="pd" id="pd${i}" type="date" value="${def.d}"></label></div>`;}
+  box.innerHTML=h;
+}
+buildParts();
+$('qtd').addEventListener('change',()=>{buildParts();update();});
+
+/* ---------- Leitura do formulário ---------- */
+function read(){
+  const today=new Date();
+  const parts=[...document.querySelectorAll('.part')].map(r=>{const d=r.querySelector('.pd').value;let age=NaN;
+    if(d){const b=new Date(d+'T12:00:00');age=(today-b)/(365.2425*864e5);}
+    return{p:num(r.querySelector('.pp').value),d,age};});
+  return{
+    origem:$('o-sbpe').checked?'SBPE':'FGTS', qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
+    cidade:$('cidade').value.trim()||'cidade', uf:$('uf').value, porte:$('porte').value, tetoCid:num($('tetoCid').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
+    parts, sis:$('s-sac').checked?'SAC':'PRICE', dep:$('dep').checked, obra:Math.round(num($('obra').value)),
+    prazoAlt:Math.round(num($('prazoAlt').value)), entAlt:num($('entAlt').value)
+  };
+}
+
+function faixaDe(r){return r<=3200?1:r<=5000?2:r<=9600?3:r<=13000?4:0;}
+const FX_MIN={1:0,2:3200.01,3:5000.01,4:9600.01};
+function interp(str,r){
+  const pts=String(str||'').split(',').map(s=>s.split(':').map(num)).filter(p=>p.length===2&&isFinite(p[0])&&isFinite(p[1])).sort((a,b)=>a[0]-b[0]);
+  if(!pts.length)return null; if(r<=pts[0][0])return pts[0][1]; if(r>=pts[pts.length-1][0])return pts[pts.length-1][1];
+  for(let k=1;k<pts.length;k++)if(r<=pts[k][0]){const[a,va]=pts[k-1],[b,vb]=pts[k];return va+(vb-va)*(r-a)/(b-a);}
+}
+
+/* ---------- Cálculo ---------- */
+function compute(s){
+  const R={alerts:[],block:null};
+  const fgts=s.origem==='FGTS';
+  R.faixa=fgts?faixaDe(s.renda):0;
+  const t12=s.tetoCid>0?s.tetoCid:P.tetos[s.porte], TETO={1:t12,2:t12,3:P.t3,4:P.t4};
+  R.reg=UFS[s.uf]; R.local=`${s.cidade} - ${s.uf}`;
+  R.teto=fgts?(TETO[R.faixa]||0):Infinity;
+  if(fgts){
+    if(!R.faixa){R.block=`Renda de ${BRL(s.renda)} passa de R$ 13.000,00 e não enquadra no Minha Casa Minha Vida. Use origem SBPE.`;}
+    else if(s.valor>R.teto){
+      let need=0;for(const f of[1,2,3,4]){if(f>R.faixa&&s.valor<=TETO[f]){need=f;break;}}
+      R.block=`Renda de Faixa ${R.faixa} e imóvel de ${BRL(s.valor)}, acima do teto da Faixa ${R.faixa} em ${R.local} (${BRL(R.teto)}). O sistema não mostra valores nesse caso.`+
+        (need?` Para esse imóvel a renda precisaria ser de Faixa ${need}, a partir de ${BRL(FX_MIN[need])}.`:' O imóvel passa do teto de todas as faixas; só pelo SBPE.');
+    }
+  }
+  // Taxa
+  let base=P.sbpe; if(fgts){const b=P.rates.find(x=>s.renda<=x.ate);base=b?b.t:P.rates[P.rates.length-1].t;}
+  if(fgts&&R.faixa&&R.faixa<=2&&(R.reg==='N'||R.reg==='NE'))base-=P.nne;
+  R.taxa=fgts&&s.cotista?base-P.red:base;
+  R.enq= fgts ? (R.faixa<=2?'3280 – NPMCMV Unidade vinculada PF empreendimento com financ PJ':'Faixa '+R.faixa+' – código a confirmar') : '1976 – SBPE';
+  // Desconto
+  R.desc=0;
+  R.unip=s.qtd===1&&!s.dep;
+  if(fgts&&R.faixa&&R.faixa<=2&&!s.benef&&s.renda<=P.subRendaMax){
+    let v=interp(P.curva,s.renda)||0;
+    v=Math.min(v,R.reg==='N'?P.subMaxN:P.subMax);
+    if(R.unip)v*=1-P.unip/100;
+    R.desc=v>=P.subMin?Math.round(v*100)/100:0;
+  }
+  R.cota=fgts?P.cotaF:(s.sis==='SAC'?P.cotaSac:P.cotaPrice);
+  R.adm=fgts?P.admF:P.admS;
+  // Prazo
+  const ages=s.parts.map(p=>p.age).filter(isFinite), oldest=ages.length?Math.max(...ages):30;
+  const obra=Math.max(0,Math.min(36,s.obra||0));
+  R.obra=obra;
+  R.prazoMax=Math.max(0,Math.min(420,Math.floor((80.5-oldest)*12)-obra));
+  R.n=s.prazoAlt>0?Math.min(s.prazoAlt,R.prazoMax):R.prazoMax;
+  if(s.prazoAlt>R.prazoMax)R.alerts.push(['warn',`Prazo limitado a ${R.prazoMax} meses pela idade do participante mais velho.`]);
+  if(R.n<=0){R.block=R.block||'Pela idade do participante mais velho não há prazo disponível.';}
+  // Encargos
+  const i=R.taxa/100/12, n=R.n;
+  const pactSum=s.parts.reduce((a,p)=>a+(p.p||0),0)||100;
+  R.mipW=s.parts.reduce((a,p)=>a+(p.p||0)/pactSum*mipRate(isFinite(p.age)?p.age:30),0);
+  R.dfiV=s.valor*P.dfi/100;
+  const factor=s.sis==='SAC'?(1/n+i):(i>0?i/(1-Math.pow(1+i,-n)):1/n);
+  R.prestMax=isFinite(s.siric)&&s.siric>0?s.siric:0.3*s.renda;
+  const capPrest=(R.prestMax-R.dfiV-R.adm)/(factor+R.mipW);
+  const capCota=s.valor*R.cota/100;
+  const capValor=s.valor-R.desc;
+  let fin=Math.min(capPrest,capCota,capValor), lim=fin===capPrest?'prestação máxima':fin===capCota?`cota de ${R.cota}%`:'valor do imóvel';
+  if(isFinite(s.entAlt)&&s.entAlt>0){const capEnt=s.valor-R.desc-s.entAlt;if(capEnt<fin){fin=capEnt;lim='entrada informada';}}
+  fin=Math.floor(Math.max(0,fin)*100)/100;
+  R.fin=fin; R.lim=lim; R.entrada=Math.max(0,s.valor-R.desc-fin);
+  if(isFinite(s.entAlt)&&s.entAlt>0&&s.entAlt<R.entrada-0.01)R.alerts.push(['warn',`A entrada mínima é ${BRL(R.entrada)}; valor menor não é aceito.`]);
+  // Fase de obra
+  R.obraRows=[];
+  for(let k=1;k<=obra;k++){const lib=k<obra?Math.min(fin,fin*0.02*k):fin, j=lib*i, mip=lib*R.mipW;R.obraRows.push({k,lib,juros:j,mip,dfi:R.dfiV,adm:R.adm,total:j+mip+R.dfiV+R.adm});}
+  // Amortização
+  const rows=[];let saldo=fin;const tr=P.tr/100;
+  for(let k=1;k<=n&&saldo>0.005;k++){
+    const sIni=k===1?saldo:saldo*(1+tr), rem=n-k+1, juros=sIni*i;
+    const amort=s.sis==='SAC'?sIni/rem:((i>0?sIni*i/(1-Math.pow(1+i,-rem)):sIni/rem)-juros);
+    const mip=sIni*R.mipW, total=amort+juros+mip+R.dfiV+R.adm; saldo=Math.max(0,sIni-amort);
+    rows.push({k,amort,juros,mip,dfi:R.dfiV,adm:R.adm,total,saldo});
+  }
+  R.rows=rows;
+  R.efet=(Math.pow(1+i,12)-1)*100;
+  return R;
+}
+
+/* ---------- Validação por etapa ---------- */
+function stepError(n,s,R){
+  if(n===2){if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';}
+  if(n===3){const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);if(Math.abs(sum-100)>0.01)return`A pactuação soma ${sum.toLocaleString('pt-BR')}%; precisa dar 100%.`;
+    if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos.';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
+  if(n===4&&R.block)return'Sem enquadramento para estes dados.';
+  if(n===6&&!(s.obra>=0&&s.obra<=36))return'Prazo de obra entre 0 e 36 meses.';
+  return'';
+}
+
+/* ---------- Render ---------- */
+function update(){
+  const s=read(), R=compute(s);
+  $('fgtsChecks').hidden=s.origem!=='FGTS'; $('depBox').hidden=s.origem!=='FGTS';
+  // pactuação
+  const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);
+  $('pactMsg').innerHTML=Math.abs(sum-100)>0.01?`<div class="alert warn">Soma atual: <b>${sum.toLocaleString('pt-BR',{maximumFractionDigits:2})}%</b>.</div>`:'';
+  // enquadramento
+  if(R.block)$('enqBox').innerHTML=`<div class="alert bad">${R.block}</div>`;
+  else $('enqBox').innerHTML=`<div class="enq"><span class="code">${R.enq.split(' – ')[0]}</span><div><b>${R.enq.split(' – ').slice(1).join(' – ')||R.enq}</b><br>
+    <span class="hint">${s.origem==='FGTS'?`Faixa ${R.faixa} · teto em ${R.local}: ${BRL(R.teto)} · taxa ${PCT(R.taxa,2)} a.a.${s.cotista?' (com redutor cotista)':''}${R.faixa<=2&&(R.reg==='N'||R.reg==='NE')?' (com redução Norte/Nordeste)':''}`:`Taxa ${PCT(R.taxa,2)} a.a. + TR`}</span></div></div>`;
+  // detalhamento
+  if(cur===7)renderResult(s,R);
+  // resumo
+  const rs=[['Origem de recurso',s.origem==='FGTS'?'FGTS – Fundo de Garantia':'SBPE'],['Tipo de pessoa','Física'],['Tipo de financiamento','Residencial urbano']];
+  if(s.origem==='FGTS')rs.push(['FGTS há mais de 3 anos',s.cotista?'Sim':'Não'],['Já beneficiado com subsídio',s.benef?'Sim':'Não']);
+  if(maxReached>=2)rs.push(['Categoria do imóvel','Construção/Aq. terreno const. – planta e coletivas'],['Cidade',`${s.cidade} - ${s.uf}`],['Porte',PORTES[s.porte]]);
+  if(s.valor>0)rs.push(['Valor do imóvel',BRL(s.valor)]);
+  if(s.siric>0)rs.push(['Prestação máxima – SIRIC',BRL(s.siric)]);
+  if(s.renda>0)rs.push(['Renda familiar',BRL(s.renda)]);
+  if(maxReached>=3){rs.push(['Participantes',String(s.qtd)]);s.parts.forEach((p,j)=>{if(p.d)rs.push([`Participante ${j+1}`,`${(p.p||0).toLocaleString('pt-BR')}% · ${p.d.split('-').reverse().join('/')}`]);});}
+  if(maxReached>=5)rs.push(['Sistema',s.sis+(s.origem==='FGTS'?' FGTS':'')]);
+  if(maxReached>=6)rs.push(['Prazo de obra',`${R.obra} meses`]);
+  $('resumo').innerHTML=rs.map(([a,b])=>`<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+  // barra
+  const err=stepError(cur,s,R);
+  $('back').disabled=cur===1; $('next').hidden=cur===7; $('next').disabled=!!err; $('barMsg').textContent=err;
+  $('next').textContent=cur===6?'Calcular':'Avançar';
+}
+
+function renderResult(s,R){
+  const r1=R.rows[0];
+  $('resAlert').innerHTML=(R.block?`<div class="alert bad">${R.block}</div>`:'')+R.alerts.map(([c,t])=>`<div class="alert ${c}">${t}</div>`).join('');
+  $('kP1').textContent=r1?BRL(r1.total):'–'; $('kJn').textContent=PCT(R.taxa); $('kJe').textContent=PCT(R.efet);
+  if($('prazoAlt').value==='')$('prazoAlt').placeholder=String(R.prazoMax);
+  const sum=k=>R.rows.reduce((a,r)=>a+r[k],0);
+  const lines=[
+    ['Enquadramento',R.enq],['Valor do imóvel',BRL(s.valor)],['Prazo máximo',`${R.prazoMax} meses`],['Sistema de amortização',s.sis+(s.origem==='FGTS'?' FGTS':'')],
+    ['Cota máx. financiamento',`${R.cota}%`],['Valor de entrada',BRL(R.entrada)],['Desconto',BRL(R.desc)+(R.desc&&R.unip?' (unipessoal, −70%)':'')],['Prazo',`${R.n} meses`],
+    ['Valor de financiamento',BRL(R.fin)],['Limitado por',R.lim],
+    ['Composição da 1ª prestação',r1?`${BRL(r1.amort+r1.juros)} + seguros ${BRL(r1.mip+r1.dfi)}${R.adm?` + taxa ${BRL(R.adm)}`:''}`:'–'],
+    ['Última prestação',R.rows.length?BRL(R.rows[R.rows.length-1].total):'–'],
+    ['Total de juros no contrato',BRL(sum('juros'))],['Total de seguros e taxas',BRL(sum('mip')+sum('dfi')+sum('adm'))]
+  ];
+  $('det').innerHTML=lines.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+  const o=R.obraRows;
+  $('detObra').innerHTML=o.length?[
+    ['Prazo de obra',`${R.obra} meses`],['Encargo no 1º mês de obra',BRL(o[0].total)],['Encargo no último mês de obra',BRL(o[o.length-1].total)],
+    ['Total pago durante a obra',BRL(o.reduce((a,r)=>a+r.total,0))]].map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')
+    :'<dt>Sem fase de obra</dt><dd>–</dd>';
+  drawChart(R.rows); drawTable(R);
+}
+
+function drawChart(rows){
+  if(!rows.length){$('chart').innerHTML='';return;}
+  const W=720,H=220,pl=60,pr=12,pt=10,pb=26,n=rows.length,max=Math.max(...rows.map(r=>r.total))*1.08;
+  const x=k=>pl+(k-1)/Math.max(1,n-1)*(W-pl-pr), y=v=>pt+(1-v/max)*(H-pt-pb);
+  const step=Math.max(1,Math.floor(n/180)), pts=f=>rows.filter((r,j)=>j%step===0||j===n-1).map(r=>`${x(r.k).toFixed(1)},${y(r[f]).toFixed(1)}`).join(' ');
+  let g='';for(let t=0;t<=4;t++){const v=max/4*t;g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${Math.round(v).toLocaleString('pt-BR')}</text>`;}
+  const yrs=Math.ceil(n/12),ys=yrs>20?5:yrs>8?2:1;for(let a=0;a<=yrs;a+=ys)g+=`<text x="${x(Math.min(n,a*12||1))}" y="${H-6}" text-anchor="middle">${a}a</text>`;
+  $('chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Prestação por mês">${g}
+  <polygon points="${x(1)},${y(0)} ${pts('total')} ${x(n)},${y(0)}" fill="var(--accent-soft)"/>
+  <polyline points="${pts('total')}" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <polyline points="${pts('juros')}" fill="none" stroke="var(--juros)" stroke-width="2"/></svg>`;
+}
+let lastR=null;
+function drawTable(R){
+  lastR=R;const f=BRL;let head,body='';
+  if(mensal){
+    head='<tr><th>Mês</th><th>Prestação</th><th>Amortização</th><th>Juros</th><th>Seguros</th><th>Saldo devedor</th></tr>';
+    for(const r of R.obraRows)body+=`<tr class="obra"><td>Obra ${r.k}</td><td>${f(r.total)}</td><td>–</td><td>${f(r.juros)}</td><td>${f(r.mip+r.dfi)}</td><td>${f(r.lib)} liberado</td></tr>`;
+    for(const r of R.rows)body+=`<tr><td>${r.k}</td><td>${f(r.total)}</td><td>${f(r.amort)}</td><td>${f(r.juros)}</td><td>${f(r.mip+r.dfi)}</td><td>${f(r.saldo)}</td></tr>`;
+  }else{
+    head='<tr><th>Ano</th><th>Prestação média</th><th>Amortização</th><th>Juros</th><th>Seguros e taxa</th><th>Saldo no fim</th></tr>';
+    for(let a=0;a*12<R.rows.length;a++){const s=R.rows.slice(a*12,a*12+12),t=k=>s.reduce((x,r)=>x+r[k],0);
+      body+=`<tr><td>${a+1}</td><td>${f(t('total')/s.length)}</td><td>${f(t('amort'))}</td><td>${f(t('juros'))}</td><td>${f(t('mip')+t('dfi')+t('adm'))}</td><td>${f(s[s.length-1].saldo)}</td></tr>`;}
+  }
+  $('tbl').innerHTML=`<thead>${head}</thead><tbody>${body}</tbody>`;
+  $('tblTitle').textContent=mensal?'Evolução mês a mês (inclui obra)':'Evolução por ano (após a obra)';
+  $('toggle').textContent=mensal?'Ver por ano':'Ver mês a mês';
+}
+$('toggle').onclick=()=>{mensal=!mensal;if(lastR)drawTable(lastR);};
+$('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();};
+
+$('next').onclick=()=>{if(cur<7)show(cur+1);};
+$('back').onclick=()=>{if(cur>1)show(cur-1);};
+$('nova').onclick=()=>{['valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;$('obra').value='36';maxReached=1;show(1);};
+document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
+document.addEventListener('change',e=>{if(!$('params').contains(e.target))update();});
+['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('blur',()=>{const v=num($(id).value);if(isFinite(v))$(id).value=money(v);}));
+
+/* ---------- Tela de parâmetros ---------- */
+function renderParams(){
+  $('pRates').innerHTML='<thead><tr><th>Renda até (R$)</th><th>Taxa % a.a.</th></tr></thead><tbody>'+
+    P.rates.map((r,i)=>`<tr><td><input data-r="${i}" data-k="ate" value="${money(r.ate)}"></td><td><input data-r="${i}" data-k="t" value="${String(r.t).replace('.',',')}"></td></tr>`).join('')+'</tbody>';
+  $('pRed').value=String(P.red).replace('.',',');$('pSbpe').value=String(P.sbpe).replace('.',',');$('pCotaF').value=P.cotaF;$('pCotaS').value=`${P.cotaSac} / ${P.cotaPrice}`;
+  $('pMip').value=String(P.mip).replace('.',',');$('pDfi').value=String(P.dfi).replace('.',',');$('pAdm').value=`${P.admF} / ${P.admS}`;$('pTr').value=String(P.tr).replace('.',',');
+  $('pNne').value=String(P.nne).replace('.',',');
+  $('pT750').value=money(P.tetos.p750);$('pT300').value=money(P.tetos.p300);$('pT100').value=money(P.tetos.p100);$('pT0').value=money(P.tetos.p0);
+  $('pT3').value=money(P.t3);$('pT4').value=money(P.t4);
+  $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
+}
+function collectParams(){
+  document.querySelectorAll('#pRates input').forEach(el=>{const v=num(el.value);if(isFinite(v))P.rates[el.dataset.r][el.dataset.k]=v;});
+  P.rates.sort((a,b)=>a.ate-b.ate);
+  const g=(id,k)=>{const v=num($(id).value);if(isFinite(v))P[k]=v;};
+  g('pRed','red');g('pSbpe','sbpe');g('pCotaF','cotaF');g('pMip','mip');g('pDfi','dfi');g('pTr','tr');
+  const cs2=$('pCotaS').value.split('/').map(num);if(isFinite(cs2[0]))P.cotaSac=cs2[0];if(isFinite(cs2[1]))P.cotaPrice=cs2[1];
+  const ad=$('pAdm').value.split('/').map(num);if(isFinite(ad[0]))P.admF=ad[0];if(isFinite(ad[1]))P.admS=ad[1];
+  g('pNne','nne');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');g('pUnip','unip');g('pSubR','subRendaMax');
+  [['pT750','p750'],['pT300','p300'],['pT100','p100'],['pT0','p0']].forEach(([id,k])=>{const v=num($(id).value);if(isFinite(v))P.tetos[k]=v;});
+  P.curva=$('pCurva').value.trim();
+  const sm=$('pSubMax').value.split('/').map(num);if(isFinite(sm[0]))P.subMax=sm[0];if(isFinite(sm[1]))P.subMaxN=sm[1];
+}
+$('openParams').onclick=()=>{$('stepTitle').textContent='Parâmetros';renderParams();STEPS.forEach(s=>s.hidden=true);$('params').hidden=false;$('barMsg').textContent='';$('next').hidden=true;$('back').disabled=true;};
+$('saveParams').onclick=()=>{collectParams();try{localStorage.setItem('scp-params',JSON.stringify(P))}catch(e){}fillPortes();show(cur);};
+$('resetParams').onclick=()=>{P=JSON.parse(JSON.stringify(DEF));try{localStorage.removeItem('scp-params')}catch(e){}renderParams();};
+
+show(1);
+})();
+</script>
+
+</body>
+</html>
