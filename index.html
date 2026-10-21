@@ -697,6 +697,22 @@ $('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].fo
 document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
 document.addEventListener('change',e=>{if(!$('params').contains(e.target))update();});
 ['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('blur',()=>{const v=num($(id).value);if(isFinite(v))$(id).value=money(v);}));
+/* Máscara de valor enquanto digita: 3400 -> 3.400 ; 3400,5 -> 3.400,5 */
+function maskMoney(el){
+  const old=el.value, pos=el.selectionStart??old.length;
+  const keep=c=>/[\d,]/.test(c);
+  const before=[...old.slice(0,pos)].filter(keep).length;
+  let raw=old.replace(/\./g,'').replace(/[^\d,]/g,'');
+  const k=raw.indexOf(',');
+  let ip=k<0?raw:raw.slice(0,k), dp=k<0?null:raw.slice(k+1).replace(/,/g,'').slice(0,2);
+  ip=ip.replace(/^0+(?=\d)/,'');
+  const out=ip.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(dp!==null?','+dp:'');
+  if(out===old)return;
+  el.value=out;
+  let n=0,i=0;while(i<out.length&&n<before){if(keep(out[i]))n++;i++;}
+  try{el.setSelectionRange(i,i)}catch(e){}
+}
+['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('input',e=>maskMoney(e.target)));
 
 /* ---------- Tela de parâmetros ---------- */
 function renderParams(){
