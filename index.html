@@ -403,20 +403,20 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:4,
+  v:5,
   rates:[{ate:2000,t:4.75},{ate:2640,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4700,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2640, tr:0,
   tetos:{p750:275000,p300:270000,p100:245000,p0:210000}, t3:400000, t4:600000,
-  curva:'1750:50000, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3500:2700, 3700:1900, 4000:1500',
+  curva:'1750:52734, 1800:51287, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3500:2700, 3700:1900, 4000:1500',
   subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==4)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==5)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
-const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.66],[45,2.54],[50,3.90],[55,6.34],[60,10.25],[65,19.52],[70,29.28],[200,43.92]];
-const mipRate=a=>{for(const[l,f]of MIPF)if(a<=l)return P.mip*f/100;return P.mip*43.92/100;};
+const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.66],[45,2.54],[50,4.84],[55,7.865],[60,12.71],[65,24.2],[70,36.3],[200,54.5]];
+const mipRate=a=>{for(const[l,f]of MIPF)if(a<=l)return P.mip*f/100;return P.mip*54.5/100;};
 
 /* ---------- Estado e navegação ---------- */
 const STEPS=[...document.querySelectorAll('.step')];
@@ -467,8 +467,9 @@ function cityInfo(v){
 function read(){
   const today=new Date();
   const parts=[...document.querySelectorAll('.part')].map(r=>{const d=r.querySelector('.pd').value;let age=NaN;
-    if(d){const b=new Date(d+'T12:00:00');age=(today-b)/(365.2425*864e5);}
-    return{p:num(r.querySelector('.pp').value),d,age};});
+    let ageM=NaN;
+    if(d){const b=new Date(d+'T12:00:00');age=(today-b)/(365.2425*864e5);ageM=(today.getFullYear()-b.getFullYear())*12+(today.getMonth()-b.getMonth())-(today.getDate()<b.getDate()?1:0);}
+    return{p:num(r.querySelector('.pp').value),d,age,ageM};});
   return{
     origem:$('origemSel').value, qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
     ...cityInfo($('cidade').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
@@ -518,10 +519,10 @@ function compute(s){
   R.cota=fgts?P.cotaF:(s.sis==='SAC'?P.cotaSac:P.cotaPrice);
   R.adm=fgts?(s.renda<=P.admIsento?0:P.admF):P.admS;
   // Prazo
-  const ages=s.parts.map(p=>p.age).filter(isFinite), oldest=ages.length?Math.max(...ages):30;
+  const agesM=s.parts.map(p=>p.ageM).filter(isFinite), oldestM=agesM.length?Math.max(...agesM):360;
   const obra=Math.max(0,Math.min(36,s.obra||0));
   R.obra=obra;
-  R.prazoMax=Math.max(0,Math.min(420,Math.floor((80.5-oldest)*12)-obra));
+  R.prazoMax=Math.max(0,Math.min(420,966-oldestM-obra));
   R.n=s.prazoAlt>0?Math.min(s.prazoAlt,R.prazoMax):R.prazoMax;
   if(s.prazoAlt>R.prazoMax)R.alerts.push(['warn',`Prazo limitado a ${R.prazoMax} meses pela idade do participante mais velho.`]);
   if(R.n<=0){R.block=R.block||'Pela idade do participante mais velho não há prazo disponível.';}
@@ -532,7 +533,7 @@ function compute(s){
   R.dfiV=s.valor*P.dfi/100;
   const factor=s.sis==='SAC'?(1/n+i):(i>0?i/(1-Math.pow(1+i,-n)):1/n);
   R.prestMax=isFinite(s.siric)&&s.siric>0?s.siric:0.3*s.renda;
-  const capPrest=(R.prestMax-R.dfiV-R.adm)/(factor+R.mipW);
+  const capPrest=(R.prestMax-0.01-R.dfiV-R.adm)/(factor+R.mipW);
   const capCota=s.valor*R.cota/100;
   const capValor=s.valor-R.desc;
   let fin=Math.min(capPrest,capCota,capValor), lim=fin===capPrest?'prestação máxima':fin===capCota?`cota de ${R.cota}%`:'valor do imóvel';
