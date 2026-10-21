@@ -280,6 +280,17 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
 .cron-h{padding-left:216px;font-weight:700;color:var(--brand-ink)}
 .cron label.f{grid-template-columns:200px minmax(0,1fr);text-align:left;padding-left:16px}
 @media (max-width:640px){.cron-h{padding-left:0}}
+
+/* ---- Botões do rodapé mais visíveis ---- */
+.bar{background:#e9edf2;border-top:2px solid var(--brand)}
+.bar .btn,.bar .btn.primary{font-family:Arial,"Segoe UI",sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.06em;padding:9px 22px;min-width:120px;border-radius:3px;border:1px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.bar #next,.bar #printBtn{background:var(--brand);color:#fff;border-color:var(--brand-2)}
+.bar #next:hover:not(:disabled),.bar #printBtn:hover{background:var(--brand-2);filter:none}
+.bar #back{background:#fff;color:var(--brand);border-color:var(--brand)}
+.bar #back:hover:not(:disabled){background:var(--accent-soft);filter:none}
+.bar .btn:disabled{opacity:1;background:#cfd6df;color:#7a8594;border-color:#cfd6df;box-shadow:none}
+.bar .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bar .msg{font-size:.95rem;font-weight:600}
 </style>
 </head>
 <body>
