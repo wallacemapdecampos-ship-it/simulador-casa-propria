@@ -697,7 +697,7 @@ function update(){
   // barra
   const err=stepError(cur,s,R);
   $('back').disabled=cur===1; $('next').hidden=cur===7; $('printBtn').hidden=cur!==7; $('next').disabled=!!err; $('barMsg').textContent=err;
-  $('next').textContent=cur===6?'Calcular':'Avançar';
+  $('next').textContent='Avançar';
 }
 
 function renderResult(s,R){
