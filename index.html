@@ -597,7 +597,7 @@ function compute(s){
   R.reg=UFS[s.uf]; R.local=`${s.cidade} - ${s.uf}`;
   R.teto=fgts?(TETO[R.faixa]||0):Infinity;
   if(fgts){
-    if(!R.faixa||s.renda>P.fgtsRendaMax){R.block=`Renda de ${BRL(s.renda)} acima de ${BRL(P.fgtsRendaMax)}: o sistema não permite simular com FGTS. Use origem SBPE.`;}
+    if(!R.faixa||s.renda>P.fgtsRendaMax){R.block=`Renda acima do permitido para FGTS (até ${BRL(P.fgtsRendaMax)}).`;}
     else if(s.valor>R.teto){
       let need=0;for(const f of[1,2,3,4]){if(f>R.faixa&&s.valor<=TETO[f]){need=f;break;}}
       R.block=`Renda de Faixa ${R.faixa} e imóvel de ${BRL(s.valor)}, acima do teto da Faixa ${R.faixa} em ${R.local} (${BRL(R.teto)}). O sistema não mostra valores nesse caso.`+
@@ -662,7 +662,7 @@ function compute(s){
 
 /* ---------- Validação por etapa ---------- */
 function stepError(n,s,R){
-  if(n===2){if(!s.cidadeOk)return'Escolha a cidade na lista (ex.: Tatuí - SP).';if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';if(s.origem==='FGTS'&&s.renda>P.fgtsRendaMax)return`No FGTS a renda vai até ${BRL(P.fgtsRendaMax)}. Acima disso, use SBPE.`;}
+  if(n===2){if(!s.cidadeOk)return'Escolha a cidade na lista (ex.: Tatuí - SP).';if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';if(s.origem==='FGTS'&&s.renda>P.fgtsRendaMax)return`Renda acima do permitido para FGTS (até ${BRL(P.fgtsRendaMax)}).`;}
   if(n===3){const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);if(Math.abs(sum-100)>0.01)return`A pactuação soma ${sum.toLocaleString('pt-BR')}%; precisa dar 100%.`;
     if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos (dd/mm/aaaa).';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
   if(n===4&&R.block)return'Sem enquadramento para estes dados.';
