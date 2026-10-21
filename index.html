@@ -210,6 +210,35 @@ aside dl{font-size:.82rem;padding:8px}
 .bar .btn,.bar .btn.primary{background:var(--btn);color:var(--brand-ink);font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:.05em;font-size:.8rem;padding:6px 8px;min-width:0}
 .bar .in{max-width:none}
 @media (max-width:640px){.checks{padding-left:0}label.f{grid-template-columns:minmax(0,1fr)}dl.det{grid-template-columns:minmax(0,1fr) auto}}
+
+/* ---- Tamanho compacto, como no sistema ---- */
+html{font-size:13px}
+body{font-size:13px;line-height:1.4}
+.top .in{padding-block:7px}
+.brand svg{width:28px;height:28px}
+.brand b{font-size:1.35rem}
+.sub .in{padding-block:6px}
+.titlebar{padding-block:10px}
+h1{font-size:1.45rem}
+.grid{padding-top:14px;gap:20px;grid-template-columns:minmax(0,1fr) 340px}
+main.panel .step{gap:10px;padding-top:12px}
+.fields{gap:8px}
+label.f{grid-template-columns:200px minmax(0,340px);font-size:1rem}
+label.f>input,label.f>select{font-size:1rem;padding:2px 5px}
+.checks{padding-left:216px;gap:8px}
+.checks label{font-size:1rem}
+dl.det{grid-template-columns:minmax(0,420px) minmax(0,1fr)}
+dl.det dt,dl.det dd{font-size:1rem;padding:1px 0}
+.kpis div{padding:8px 4px}
+.kpis .k,.kpis .v,.kpis .v.main{font-size:1.05rem}
+h3{font-size:1.05rem;margin-top:6px}
+aside dl{font-size:.92rem;gap:2px}
+aside h2{font-size:1.05rem}
+.bar{padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.bar .btn,.bar .btn.primary{font-size:.85rem;padding:5px 8px}
+.enqtit{font-size:1rem}
+.alert{font-size:.95rem;padding:8px 10px}
+@media (max-width:640px){.checks{padding-left:0}label.f{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
