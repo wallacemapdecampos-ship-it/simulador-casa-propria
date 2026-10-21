@@ -535,6 +535,8 @@ label.f>input:focus,label.f>select:focus{border-color:var(--accent);outline:2px 
 
 <script>
 if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed');
+/* Dentro do Assistente: Ctrl+P imprime só o simulador */
+if(window.top!==window)document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();window.print();}},true);
 (function(){
 const $=id=>document.getElementById(id);
 const BRL=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
