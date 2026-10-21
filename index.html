@@ -254,10 +254,8 @@ aside dl{font-size:.82rem;padding:8px}
         <h2>Imóvel</h2>
         <div class="fields">
           <label class="f" style="grid-column:1/-1">Categoria do imóvel<select disabled><option>CONSTRUÇÃO/AQ TER CONST - IM. PLANTA E COLETIVAS</option></select></label>
-          <label class="f" for="cidade">Cidade<input id="cidade" style="font-family:var(--f-body)" value="Sorocaba"></label>
-          <label class="f" for="uf">UF<select id="uf"></select><span class="hint">Norte e Nordeste têm juros 0,25 menor nas Faixas 1 e 2.</span></label>
-          <label class="f" for="porte">Porte do município<select id="porte"></select><span class="hint">Define o teto das Faixas 1 e 2.</span></label>
-          <label class="f" for="tetoCid">Teto específico da cidade (opcional)<input id="tetoCid" inputmode="decimal" placeholder="usa o teto do porte"></label>
+          <label class="f" for="cidade">Cidade<input id="cidade" list="cidList" autocomplete="off" placeholder="Digite e escolha na lista" value="Sorocaba - SP"></label>
+          <datalist id="cidList"></datalist>
           <label class="f" for="valor">Valor do imóvel<input id="valor" inputmode="decimal" placeholder="264.000,00"></label>
           <label class="f" for="siric">Prestação máxima – SIRIC<input id="siric" inputmode="decimal" placeholder="750,00"><span class="hint">Em branco, usa 30% da renda.</span></label>
           <label class="f" for="renda">Renda familiar mensal bruta<input id="renda" inputmode="decimal" placeholder="2.500,00"></label>
@@ -405,16 +403,16 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:3,
+  v:4,
   rates:[{ate:2000,t:4.75},{ate:2640,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4700,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2640, tr:0,
-  tetos:{p750:275000,p300:270000,p100:245000,p0:230000}, t3:400000, t4:600000,
+  tetos:{p750:275000,p300:270000,p100:245000,p0:210000}, t3:400000, t4:600000,
   curva:'1750:50000, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3500:2700, 3700:1900, 4000:1500',
   subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==3)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==4)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
 const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.66],[45,2.54],[50,3.90],[55,6.34],[60,10.25],[65,19.52],[70,29.28],[200,43.92]];
@@ -430,9 +428,22 @@ function show(n){cur=n;maxReached=Math.max(maxReached,n);$('params').hidden=true
 for(let i=1;i<=10;i++)$('qtd').insertAdjacentHTML('beforeend',`<option>${i}</option>`);
 function fillSis(){const o=$('origemSel').value,v=$('sisSel').value;const ops=o==='FGTS'?[['SAC','893 - SAC FGTS'],['PRICE','894 - PRICE FGTS']]:[['SAC','SAC'],['PRICE','PRICE']];$('sisSel').innerHTML=ops.map(([a,b])=>`<option value="${a}">${b}</option>`).join('');$('sisSel').value=v||'SAC';}
 fillSis();$('origemSel').addEventListener('change',fillSis);
-$('uf').innerHTML=Object.keys(UFS).map(u=>`<option${u==='SP'?' selected':''}>${u}</option>`).join('');
-function fillPortes(){const v=$('porte').value||'p300';$('porte').innerHTML=Object.entries(PORTES).map(([k,t])=>`<option value="${k}">${t} · teto ${BRL(P.tetos[k])}</option>`).join('');$('porte').value=v;}
-fillPortes();
+/* Municípios e população (IBGE, Censo 2022), buscados no navegador */
+let CID={};
+const fold=t=>t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function useCities(list){CID={};list.forEach(([n,p])=>{CID[fold(n)]={nome:n,pop:p};});
+  $('cidList').innerHTML=list.map(([n])=>`<option value="${n}">`).join('');update();}
+(async()=>{
+  try{const c=JSON.parse(localStorage.getItem('scp-cidades')||'null');if(c&&c.length>5000){useCities(c);return;}}catch(e){}
+  try{
+    const r=await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
+    const j=await r.json();
+    const list=j[0].resultados[0].series.map(x=>[x.localidade.nome,+x.serie['2022']]).sort((a,b)=>a[0].localeCompare(b[0],'pt'));
+    try{localStorage.setItem('scp-cidades',JSON.stringify(list))}catch(e){}
+    useCities(list);
+  }catch(e){}
+})();
+function porteDe(pop){return pop>750000?'p750':pop>=300000?'p300':pop>=100000?'p100':'p0';}
 
 function buildParts(){
   const q=+$('qtd').value, box=$('parts'), old=[...box.querySelectorAll('.part')].map(r=>({p:r.querySelector('.pp').value,d:r.querySelector('.pd').value}));
@@ -446,6 +457,13 @@ buildParts();
 $('qtd').addEventListener('change',()=>{buildParts();update();});
 
 /* ---------- Leitura do formulário ---------- */
+function cityInfo(v){
+  const c=CID[fold(v)];
+  if(c){const [nome,uf]=c.nome.split(/ - (?=[A-Z]{2}$)/);return{cidade:nome,uf,pop:c.pop,porte:porteDe(c.pop),cidadeOk:true};}
+  const m=String(v).trim().match(/^(.*?)\s*-\s*([A-Za-z]{2})$/);
+  const uf=m&&UFS[m[2].toUpperCase()]?m[2].toUpperCase():'SP';
+  return{cidade:m?m[1]:String(v).trim(),uf,pop:NaN,porte:'p300',cidadeOk:!Object.keys(CID).length&&!!m};
+}
 function read(){
   const today=new Date();
   const parts=[...document.querySelectorAll('.part')].map(r=>{const d=r.querySelector('.pd').value;let age=NaN;
@@ -453,7 +471,7 @@ function read(){
     return{p:num(r.querySelector('.pp').value),d,age};});
   return{
     origem:$('origemSel').value, qtd:+$('qtd').value, cotista:$('cotista').checked, benef:$('benef').checked,
-    cidade:$('cidade').value.trim()||'cidade', uf:$('uf').value, porte:$('porte').value, tetoCid:num($('tetoCid').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
+    ...cityInfo($('cidade').value), valor:num($('valor').value), siric:num($('siric').value), renda:num($('renda').value),
     parts, sis:$('sisSel').value, dep:$('dep').checked, obra:Math.round(num($('obra').value)),
     prazoAlt:Math.round(num($('prazoAlt').value)), entAlt:num($('entAlt').value)
   };
@@ -472,7 +490,7 @@ function compute(s){
   const R={alerts:[],block:null};
   const fgts=s.origem==='FGTS';
   R.faixa=fgts?faixaDe(s.renda):0;
-  const t12=s.tetoCid>0?s.tetoCid:P.tetos[s.porte], TETO={1:t12,2:t12,3:P.t3,4:P.t4};
+  const t12=P.tetos[s.porte], TETO={1:t12,2:t12,3:P.t3,4:P.t4};
   R.reg=UFS[s.uf]; R.local=`${s.cidade} - ${s.uf}`;
   R.teto=fgts?(TETO[R.faixa]||0):Infinity;
   if(fgts){
@@ -540,7 +558,7 @@ function compute(s){
 
 /* ---------- Validação por etapa ---------- */
 function stepError(n,s,R){
-  if(n===2){if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';}
+  if(n===2){if(!s.cidadeOk)return'Escolha a cidade na lista (ex.: Tatuí - SP).';if(!(s.valor>0))return'Informe o valor do imóvel.';if(!(s.renda>0))return'Informe a renda familiar.';}
   if(n===3){const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);if(Math.abs(sum-100)>0.01)return`A pactuação soma ${sum.toLocaleString('pt-BR')}%; precisa dar 100%.`;
     if(s.parts.some(p=>!p.d))return'Informe a data de nascimento de todos.';if(s.parts.some(p=>p.age<18))return'Todos os participantes precisam ter 18 anos ou mais.';}
   if(n===4&&R.block)return'Sem enquadramento para estes dados.';
@@ -564,7 +582,7 @@ function update(){
   // resumo
   const rs=[['Origem de recurso',s.origem==='FGTS'?'FGTS – Fundo de Garantia':'SBPE'],['Tipo de pessoa','Física'],['Tipo de financiamento','Residencial urbano']];
   if(s.origem==='FGTS')rs.push(['FGTS há mais de 3 anos',s.cotista?'Sim':'Não'],['Já beneficiado com subsídio',s.benef?'Sim':'Não']);
-  if(maxReached>=2)rs.push(['Categoria do imóvel','Construção/Aq. terreno const. – planta e coletivas'],['Cidade',`${s.cidade} - ${s.uf}`],['Porte',PORTES[s.porte]]);
+  if(maxReached>=2)rs.push(['Categoria do imóvel','Construção/Aq. terreno const. – planta e coletivas'],['Cidade',s.cidadeOk?`${s.cidade} - ${s.uf}`:'—']);
   if(s.valor>0)rs.push(['Valor do imóvel',BRL(s.valor)]);
   if(s.siric>0)rs.push(['Prestação máxima – SIRIC',BRL(s.siric)]);
   if(s.renda>0)rs.push(['Renda familiar',BRL(s.renda)]);
@@ -665,7 +683,7 @@ function collectParams(){
   const sm=$('pSubMax').value.split('/').map(num);if(isFinite(sm[0]))P.subMax=sm[0];if(isFinite(sm[1]))P.subMaxN=sm[1];
 }
 $('openParams').onclick=()=>{$('stepTitle').textContent='Parâmetros';renderParams();STEPS.forEach(s=>s.hidden=true);$('params').hidden=false;$('barMsg').textContent='';$('next').hidden=true;$('back').disabled=true;};
-$('saveParams').onclick=()=>{collectParams();try{localStorage.setItem('scp-params',JSON.stringify(P))}catch(e){}fillPortes();show(cur);};
+$('saveParams').onclick=()=>{collectParams();try{localStorage.setItem('scp-params',JSON.stringify(P))}catch(e){}show(cur);};
 $('resetParams').onclick=()=>{P=JSON.parse(JSON.stringify(DEF));try{localStorage.removeItem('scp-params')}catch(e){}renderParams();};
 
 show(1);
