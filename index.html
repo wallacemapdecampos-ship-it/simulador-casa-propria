@@ -251,8 +251,11 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
   @page{size:A4 portrait;margin:12mm}
   html{font-size:11px}
   body{background:#fff;padding:0}
-  .top,.bar,#openParams,.adj,#detObra,#chart,.legend,.scroll,#toggle,#tblTitle,.reset,.steps{display:none!important}
+  .bar,.top .acts,.adj,#detObra,#chart,.legend,.scroll,#toggle,#tblTitle,.reset,.steps{display:none!important}
   .detail-extra{display:none!important}
+  .top{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(180deg,#14408f,#0b2d6e)!important;color:#fff!important}
+  .top .in{padding-block:8px;max-width:none}
+  .brand b{font-size:1.6rem}
   .sub{background:none;border:0}
   .sub .crumb{font-size:10px}
   .titlebar{background:none;padding-block:4px;margin:0}
