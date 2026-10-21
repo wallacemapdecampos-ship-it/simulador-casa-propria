@@ -742,22 +742,23 @@ $('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].fo
 document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
 document.addEventListener('change',e=>{if(!$('params').contains(e.target))update();});
 ['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('blur',()=>{const v=num($(id).value);if(isFinite(v))$(id).value=money(v);}));
-/* Máscara de valor enquanto digita: 3400 -> 3.400 ; 3400,5 -> 3.400,5 */
+/* Máscara de valor estilo caixa eletrônico: os dígitos entram pela direita, sempre com 2 casas */
 function maskMoney(el){
-  const old=el.value, pos=el.selectionStart??old.length;
-  const keep=c=>/[\d,]/.test(c);
-  const before=[...old.slice(0,pos)].filter(keep).length;
-  let raw=old.replace(/\./g,'').replace(/[^\d,]/g,'');
-  const k=raw.indexOf(',');
-  let ip=k<0?raw:raw.slice(0,k), dp=k<0?null:raw.slice(k+1).replace(/,/g,'').slice(0,2);
-  ip=ip.replace(/^0+(?=\d)/,'');
-  const out=ip.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(dp!==null?','+dp:'');
-  if(out===old)return;
-  el.value=out;
-  let n=0,i=0;while(i<out.length&&n<before){if(keep(out[i]))n++;i++;}
-  try{el.setSelectionRange(i,i)}catch(e){}
+  const d=el.value.replace(/\D/g,'').replace(/^0+/,'');
+  if(!d){el.value='';return;}
+  const v=parseInt(d.slice(-15),10)/100;
+  el.value=money(v);
+  const n=el.value.length;try{el.setSelectionRange(n,n)}catch(e){}
 }
-['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('input',e=>maskMoney(e.target)));
+['valor','siric','renda','entAlt'].forEach(id=>{
+  const el=$(id);
+  el.addEventListener('input',e=>{if(!el._pasting)maskMoney(el);});
+  el.addEventListener('paste',e=>{
+    const t=(e.clipboardData||window.clipboardData).getData('text');const v=num(t);
+    if(isFinite(v)){e.preventDefault();el.value=money(v);el.dispatchEvent(new Event('input',{bubbles:true}));}
+  });
+  el.addEventListener('focus',()=>{const n=el.value.length;setTimeout(()=>{try{el.setSelectionRange(n,n)}catch(e){}},0);});
+});
 
 /* ---------- Tela de parâmetros ---------- */
 function renderParams(){
