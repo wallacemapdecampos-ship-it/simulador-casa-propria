@@ -507,6 +507,7 @@ label.f>input:focus,label.f>select:focus{border-color:var(--accent);outline:2px 
         <div class="fields">
           <label class="f" style="grid-column:1/-1">Curva do desconto, família com dependentes (renda:valor)<input id="pCurva" style="font-family:var(--f-mono)"><span class="hint">Pares separados por vírgula. O simulador interpola entre eles.</span></label>
           <label class="f">Desconto máximo / máximo Norte (R$)<input id="pSubMax" placeholder="55000 / 65000"></label>
+          <label class="f">Fator do desconto por porte: +750 mil / 300-750 mil / 100-300 mil / -100 mil<input id="pFatD" placeholder="1,15 / 1,075 / 1 / 0,95"></label>
           <label class="f">Desconto mínimo considerado (R$)<input id="pSubMin"></label>
           <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="pZera" style="width:auto">Zerar desconto abaixo do mínimo</label>
           <label class="f">Redução unipessoal (%)<input id="pUnip"></label>
@@ -550,16 +551,16 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:14,
+  v:15,
   rates:[{ate:2000,t:4.75},{ate:2850,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4600,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:90, cotaPrice:80, compSac:30, compPrice:25, prazoSac:420, prazoPrice:360, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2850, fgtsRendaMax:8000, tr:0,
   tetos:{p750:264000,p300:270000,p100:225000,p0:210000}, tetoCidades:'Sorocaba - SP: 264000\nRibeirão Preto - SP: 264000\nCampo Grande - MS: 264000\nVotorantim - SP: 235000\nCatanduva - SP: 235000\nItu - SP: 225000\nLeme - SP: 225000\nItapetininga - SP: 223000\nAvaré - SP: 210000', t3:400000, t4:600000,
-  curva:'1750:51900, 1800:50900, 2000:45500, 2500:22660, 2660:17553, 2870:10700, 2916:9590, 3051:7703, 3200:5433, 3291:3697, 3400:2797, 3700:2050, 3970:1790, 4000:1750',
+  curva:'1750:52300, 1800:50900, 2000:39565, 2405:23274, 2500:19704, 2660:15263, 2865:10023, 2916:9590, 3051:6698, 3200:4725, 3291:3697, 3400:2797, 3700:2050, 3970:1790, 4000:1750', fatorDesc:{p750:1.15,p300:1.075,p100:1,p0:0.95},
   zeraMin:false, subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==14)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==15)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
 const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.756],[45,2.54],[50,4.84],[55,7.865],[60,12.71],[65,24.2],[70,36.3],[200,54.5]];
@@ -684,7 +685,7 @@ function compute(s){
   R.desc=0;
   R.unip=s.qtd===1&&!s.dep;
   if(fgts&&R.faixa&&R.faixa<=2&&!s.benef&&s.renda<=P.subRendaMax){
-    let v=interp(P.curva,s.renda)||0;
+    let v=(interp(P.curva,s.renda)||0)*((P.fatorDesc||{})[s.porte]||1);
     v=Math.min(v,R.reg==='N'?P.subMaxN:P.subMax);
     if(R.unip)v*=1-P.unip/100;
     R.desc=(P.zeraMin&&v<P.subMin)?0:Math.round(v*100)/100;
@@ -868,7 +869,7 @@ function renderParams(){
   $('pNne').value=String(P.nne).replace('.',',');$('pAdmI').value=money(P.admIsento);$('pFgtsMax').value=money(P.fgtsRendaMax);
   $('pT750').value=money(P.tetos.p750);$('pT300').value=money(P.tetos.p300);$('pT100').value=money(P.tetos.p100);$('pT0').value=money(P.tetos.p0);
   $('pT3').value=money(P.t3);$('pTCid').value=P.tetoCidades||'';$('pT4').value=money(P.t4);
-  $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pZera').checked=!!P.zeraMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
+  $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pFatD').value=['p750','p300','p100','p0'].map(k=>String(P.fatorDesc[k]).replace('.',',')).join(' / ');$('pZera').checked=!!P.zeraMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
 }
 function collectParams(){
   document.querySelectorAll('#pRates input').forEach(el=>{const v=num(el.value);if(isFinite(v))P.rates[el.dataset.r][el.dataset.k]=v;});
@@ -879,7 +880,7 @@ function collectParams(){
   const cp2=$('pCompS').value.split('/').map(num);if(isFinite(cp2[0]))P.compSac=cp2[0];if(isFinite(cp2[1]))P.compPrice=cp2[1];
   const pz2=$('pPrazoS').value.split('/').map(num);if(isFinite(pz2[0]))P.prazoSac=pz2[0];if(isFinite(pz2[1]))P.prazoPrice=pz2[1];
   const ad=$('pAdm').value.split('/').map(num);if(isFinite(ad[0]))P.admF=ad[0];if(isFinite(ad[1]))P.admS=ad[1];
-  g('pNne','nne');g('pAdmI','admIsento');g('pFgtsMax','fgtsRendaMax');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');P.zeraMin=$('pZera').checked;g('pUnip','unip');g('pSubR','subRendaMax');
+  g('pNne','nne');g('pAdmI','admIsento');g('pFgtsMax','fgtsRendaMax');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');{const fd=$('pFatD').value.split('/').map(num);['p750','p300','p100','p0'].forEach((k,i)=>{if(isFinite(fd[i]))P.fatorDesc[k]=fd[i];});}P.zeraMin=$('pZera').checked;g('pUnip','unip');g('pSubR','subRendaMax');
   [['pT750','p750'],['pT300','p300'],['pT100','p100'],['pT0','p0']].forEach(([id,k])=>{const v=num($(id).value);if(isFinite(v))P.tetos[k]=v;});
   P.curva=$('pCurva').value.trim();P.tetoCidades=$('pTCid').value;
   const sm=$('pSubMax').value.split('/').map(num);if(isFinite(sm[0]))P.subMax=sm[0];if(isFinite(sm[1]))P.subMaxN=sm[1];
