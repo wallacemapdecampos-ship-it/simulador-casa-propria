@@ -240,6 +240,10 @@ aside h2{font-size:1.05rem}
 .alert{font-size:.95rem;padding:8px 10px}
 @media (max-width:640px){.checks{padding-left:0}label.f{grid-template-columns:minmax(0,1fr)}}
 aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decoration:underline}
+label.f{grid-template-columns:200px minmax(0,1fr)}
+label.f>.w-l{max-width:375px}label.f>.w-s{max-width:210px}label.f>.w-xs{max-width:50px;padding:1px 2px}
+label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justify-self:start}
+@media (max-width:640px){label.f{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -271,11 +275,6 @@ aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decora
           <label class="f">Tipo de pessoa<select disabled><option>Física</option></select></label>
           <label class="f">Categoria da pessoa<select disabled><option>CATEGORIA 1 - CONDIÇÕES NORMAIS</option></select></label>
           <label class="f">Tipo de financiamento<select disabled><option>RESIDENCIAL URBANO</option></select></label>
-          <label class="f" for="qtd">Quantidade de participantes<select id="qtd"></select></label>
-        </div>
-        <div class="checks" id="fgtsChecks">
-          <label><input type="checkbox" id="cotista">Possui 3 anos de trabalho sob o regime do FGTS, somando-se todos os períodos trabalhados?</label>
-          <label><input type="checkbox" id="benef">Proponente já beneficiado com subsídio do FGTS após 16/05/05?</label>
         </div>
       </section>
 
@@ -284,11 +283,16 @@ aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decora
         <h2>Imóvel</h2>
         <div class="fields">
           <label class="f" style="grid-column:1/-1">Categoria do imóvel<select disabled><option>CONSTRUÇÃO/AQ TER CONST - IM. PLANTA E COLETIVAS</option></select></label>
-          <label class="f" for="cidade">Cidade<input id="cidade" list="cidList" autocomplete="off" placeholder="Digite e escolha na lista" value="Sorocaba - SP"></label>
+          <label class="f" for="cidade">Cidade<input id="cidade" class="w-l" list="cidList" autocomplete="off"></label>
           <datalist id="cidList"></datalist>
-          <label class="f" for="valor">Valor do imóvel<input id="valor" inputmode="decimal" placeholder="264.000,00"></label>
-          <label class="f" for="siric">Prestação máxima – SIRIC<input id="siric" inputmode="decimal" placeholder="750,00"><span class="hint">Em branco, usa 30% da renda.</span></label>
-          <label class="f" for="renda">Renda familiar mensal bruta<input id="renda" inputmode="decimal" placeholder="2.500,00"></label>
+          <label class="f" for="valor">Valor do imóvel<input id="valor" class="w-s" inputmode="decimal"></label>
+          <label class="f" for="siric">Prestacao máxima - SIRIC<input id="siric" class="w-s" inputmode="decimal"></label>
+          <label class="f" for="renda">Renda familiar mensal bruta<input id="renda" class="w-s" inputmode="decimal"></label>
+          <label class="f" for="qtd">Quantidade de participantes<select id="qtd" class="w-xs"></select></label>
+        </div>
+        <div class="checks" id="fgtsChecks">
+          <label><input type="checkbox" id="cotista">Possui 3 anos de trabalho sob o regime do FGTS, somando-se todos os períodos trabalhados?</label>
+          <label><input type="checkbox" id="benef">Proponente já beneficiado com subsídio do FGTS após 16/05/05?</label>
         </div>
       </section>
 
@@ -360,6 +364,7 @@ aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decora
           <button type="button" class="btn small" id="toggle">Ver mês a mês</button>
         </div>
         <div class="scroll"><table id="tbl"></table></div>
+        <p class="foot">Os resultados obtidos representam apenas uma simulação e não valem como proposta. Taxas, tetos, descontos e seguros seguem os parâmetros configurados e podem diferir do sistema do agente financeiro.</p>
       </section>
 
       <!-- Parâmetros -->
@@ -412,7 +417,6 @@ aside dt a{color:var(--accent);text-decoration:none}aside dt a:hover{text-decora
     </aside>
   </div>
 
-  <p class="foot">Estimativa para atendimento e planejamento. Não substitui a simulação oficial do agente financeiro. Taxas, tetos, descontos e seguros seguem os parâmetros configurados e podem diferir do sistema.</p>
 </div>
 
 <div class="bar"><div class="in">
@@ -612,7 +616,7 @@ function update(){
   if(cur===7)renderResult(s,R);
   // resumo
   const rs=[['Origem de recurso',s.origem==='FGTS'?'FGTS – Fundo de Garantia':'SBPE'],['Tipo de pessoa','Física'],['Tipo de financiamento','Residencial urbano']];
-  if(s.origem==='FGTS')rs.push(['FGTS há mais de 3 anos',s.cotista?'Sim':'Não'],['Já beneficiado com subsídio',s.benef?'Sim':'Não']);
+  if(s.origem==='FGTS'&&maxReached>=3)rs.push(['FGTS há mais de 3 anos',s.cotista?'Sim':'Não'],['Já beneficiado com subsídio',s.benef?'Sim':'Não']);
   if(maxReached>=2)rs.push(['Categoria do imóvel','Construção/Aq. terreno const. – planta e coletivas'],['Cidade',s.cidadeOk?`${s.cidade} - ${s.uf}`:'—']);
   if(s.valor>0)rs.push(['Valor do imóvel',BRL(s.valor)]);
   if(s.siric>0)rs.push(['Prestação máxima – SIRIC',BRL(s.siric)]);
@@ -687,7 +691,7 @@ $('clearAlt').onclick=()=>{$('prazoAlt').value='';$('entAlt').value='';update();
 
 $('next').onclick=()=>{if(cur<7)show(cur+1);};
 $('back').onclick=()=>{if(cur>1)show(cur-1);};
-$('nova').onclick=()=>{['valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;$('obra').value='36';maxReached=1;show(1);};
+$('nova').onclick=()=>{['cidade','valor','siric','renda','prazoAlt','entAlt'].forEach(id=>$(id).value='');$('qtd').value='1';buildParts();$('cotista').checked=false;$('benef').checked=false;$('dep').checked=false;$('obra').value='36';maxReached=1;show(1);};
 document.addEventListener('input',e=>{if(!$('params').contains(e.target))update();});
 document.addEventListener('change',e=>{if(!$('params').contains(e.target))update();});
 ['valor','siric','renda','entAlt'].forEach(id=>$(id).addEventListener('blur',()=>{const v=num($(id).value);if(isFinite(v))$(id).value=money(v);}));
