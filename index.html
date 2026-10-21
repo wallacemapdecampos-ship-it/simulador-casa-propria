@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Simulador de financiamento habitacional FGTS (Minha Casa Minha Vida) e SBPE, etapa por etapa.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="alternate icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2034%2034%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2314408f%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230b2d6e%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2234%22%20height%3D%2234%22%20rx%3D%228%22%20fill%3D%22url%28%23g%29%22/%3E%3Cpath%20d%3D%22M8%2017.5%2017%209.5l9%208%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M11%2016v9h12v-9%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%222.6%22%20stroke-linejoin%3D%22round%22/%3E%3Crect%20x%3D%2215%22%20y%3D%2219%22%20width%3D%224%22%20height%3D%226%22%20fill%3D%22%23f2c94c%22/%3E%3C/svg%3E">
-<meta name="theme-color" content="#14408f">
+<link rel="alternate icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2022%2022%22%3E%3Crect%20width%3D%2222%22%20height%3D%2222%22%20rx%3D%225%22%20fill%3D%22%23182635%22/%3E%3Cpath%20d%3D%22M3.5%2010.5%2011%204l7.5%206.5%22%20fill%3D%22none%22%20stroke%3D%22%236fb1ea%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M5.6%209.2v8.6h10.8V9.2%22%20fill%3D%22none%22%20stroke%3D%22%23c3ceda%22%20stroke-width%3D%221.8%22%20stroke-linejoin%3D%22round%22/%3E%3Cpath%20d%3D%22M8.6%2013.2l1.8%201.8%203.4-3.6%22%20fill%3D%22none%22%20stroke%3D%22%23ffe15a%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E">
+<meta name="theme-color" content="#182635">
 <style>[hidden]{display:none!important}img{max-width:100%}</style>
 <title>Simulador Casa Própria</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: assistente em etapas à esquerda, quadro Resumo fixo à direita (desce para baixo no celular), barra Voltar/Avançar no rodapé */
@@ -291,21 +292,70 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
 .bar .btn:disabled{opacity:1;background:#cfd6df;color:#7a8594;border-color:#cfd6df;box-shadow:none}
 .bar .btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .bar .msg{font-size:.95rem;font-weight:600}
+
+/* ==== Identidade da casa (igual ao Assistente SICAQ) ==== */
+:root{--bg:#eef2f1;--panel:#ffffff;--fg:#182635;--muted:#4b5b6b;--line:#d5dde1;--accent:#0f5a9c;--accent-soft:#e7f0f8;--accent-ink:#ffffff;
+  --brand:#182635;--brand-2:#182635;--brand-ink:#0f5a9c;--gold:#ffe15a;--sub:#e7f0f8;--btn:#ffffff;--campo:#fafbfb;
+  --warn:#94580a;--warn-soft:#fff5bf;--bad:#b3261e;--bad-soft:#fbe9e7;--ok:#1f7a4d;--ok-soft:#e5f3ec;--raio:6px;
+  --f-ui:"Atkinson Hyperlegible",Arial,"Segoe UI",sans-serif}
+html{font-size:13.5px}
+body,input,select,textarea,button,h1,h2,h3,dt,dd,table,th,td,.btn,.bar .btn,.btn.calc,.brand b,.kpis .v,.kpis .k{font-family:var(--f-ui)!important}
+body{background:var(--bg);color:var(--fg)}
+.top{background:var(--brand)!important;color:#fff}
+.top .in{max-width:1180px;min-height:52px;padding-block:0;gap:18px;justify-content:flex-start}
+.brand{gap:8px;flex:none}
+.brand svg{width:22px;height:22px}
+.brand b{font-size:1.05rem;font-weight:700;letter-spacing:0}
+.top .steps{display:flex!important;flex-wrap:nowrap;gap:2px;overflow-x:auto;align-self:stretch;margin:0;padding:0;counter-reset:s}
+.top .steps li{counter-increment:s;color:#c3ceda;background:none;border:0;border-bottom:2.4px solid transparent;border-radius:0;padding:0 9px;font-weight:700;font-size:.92rem;display:flex;align-items:center;white-space:nowrap}
+.top .steps li::before{display:none}
+.top .steps li.cur{color:#fff;background:none;border-bottom-color:#6fb1ea}
+.top .steps li.done{color:#c3ceda}
+.top .acts{margin-left:auto}
+.top .acts button{background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:var(--raio);font-weight:700}
+@media (max-width:760px){.top .steps{display:none!important}}
+.sub{background:var(--panel);border-bottom:1px solid var(--line)}
+.crumb{color:var(--accent)}
+.titlebar{background:none!important;border-bottom:0;margin:0}
+h1{color:var(--fg);font-weight:700}
+.grid{padding-top:6px}
+main.panel{background:var(--panel);border:1px solid var(--line)!important;border-radius:var(--raio);padding:18px 20px 22px}
+main.panel .step{border-top:0;padding-top:0}
+aside.panel{margin-top:0;border-radius:var(--raio);border:1px solid var(--line);box-shadow:none;overflow:hidden}
+aside h2{background:var(--brand);color:#fff;font-size:.95rem}
+aside dt,aside dt a{color:var(--accent)}
+label.f>input,label.f>select,.cron input{background:var(--campo);border:1px solid var(--line);border-radius:var(--raio);padding:5px 8px}
+label.f>input:focus,label.f>select:focus{border-color:var(--accent);outline:2px solid var(--accent-soft)}
+.kpis{border-color:var(--line)}
+.kpis .k,h3{color:var(--fg)}
+.enq{border-radius:var(--raio);border-color:var(--line);background:var(--accent-soft)}
+.enq .code{background:var(--accent);border-radius:4px}
+.alert{border-radius:var(--raio)}
+.bar{background:var(--panel);border-top:1px solid var(--line)}
+.bar .btn,.bar .btn.primary{border-radius:var(--raio);letter-spacing:0;text-transform:none;font-size:.98rem;padding:8px 22px}
+.bar #next,.bar #printBtn{background:var(--accent);border-color:var(--accent);color:#fff}
+.bar #next:hover:not(:disabled),.bar #printBtn:hover{background:#0b4677}
+.bar #back{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.bar .btn:disabled{background:#c9d6e3;border-color:#c9d6e3;color:#fff}
+.btn.calc{background:#fff;color:var(--accent);border:1px solid var(--accent);border-radius:var(--raio);text-transform:none;letter-spacing:0;font-size:.95rem}
+.cron-h{color:var(--fg)}
+.low{background:var(--warn-soft);color:var(--warn)}
+@media print{.top{background:#182635!important}.top .steps{display:none!important}aside h2{background:#182635!important}}
 </style>
 </head>
 <body>
 
 
 <header class="top gut"><div class="in">
-  <a class="brand" href="#" onclick="return false" aria-label="Casa Própria">
-    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="rgba(255,255,255,.14)"/><path d="M8 17.5 17 9.5l9 8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 16v9h12v-9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><rect x="15" y="19" width="4" height="6" fill="var(--gold)"/></svg>
-    <span><b>Casa Própria</b><small>Simulador habitacional</small></span>
+  <a class="brand" href="#" onclick="return false" aria-label="Simulador Casa Própria">
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 10.5 11 3.5l8 7" fill="none" stroke="#6fb1ea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.2 9v9.5h11.6V9" fill="none" stroke="#c3ceda" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.6 13.2l1.8 1.8 3.4-3.6" fill="none" stroke="#ffe15a" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <b>Simulador Casa Própria</b>
   </a>
+  <ol class="steps" id="stepsNav"></ol>
   <div class="acts"><button type="button" id="openParams">Parâmetros</button></div>
 </div></header>
 <div class="sub gut"><div class="in">
   <span class="crumb">Simulação habitacional · FGTS e SBPE</span>
-  <ol class="steps" id="stepsNav"></ol>
 </div></div>
 
 <div class="wrap gut">
