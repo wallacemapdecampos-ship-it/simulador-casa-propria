@@ -244,6 +244,7 @@ label.f{grid-template-columns:200px minmax(0,1fr)}
 label.f>.w-l{max-width:375px}label.f>.w-s{max-width:210px}label.f>.w-xs{max-width:50px;padding:1px 2px}
 label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justify-self:start}
 @media (max-width:640px){label.f{grid-template-columns:minmax(0,1fr)}}
+.low{display:inline-block;margin-left:6px;padding:0 6px;border-radius:2px;background:var(--warn-soft);color:var(--warn);font-size:.85em}
 </style>
 </head>
 <body>
@@ -399,7 +400,8 @@ label.f>select:not(.w-xs){max-width:500px;justify-self:start}label.f>input{justi
         <div class="fields">
           <label class="f" style="grid-column:1/-1">Curva do desconto, família com dependentes (renda:valor)<input id="pCurva" style="font-family:var(--f-mono)"><span class="hint">Pares separados por vírgula. O simulador interpola entre eles.</span></label>
           <label class="f">Desconto máximo / máximo Norte (R$)<input id="pSubMax" placeholder="55000 / 65000"></label>
-          <label class="f">Desconto mínimo (R$)<input id="pSubMin"></label>
+          <label class="f">Desconto mínimo considerado (R$)<input id="pSubMin"></label>
+          <label class="f" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="pZera" style="width:auto">Zerar desconto abaixo do mínimo</label>
           <label class="f">Redução unipessoal (%)<input id="pUnip"></label>
           <label class="f">Renda máxima com desconto (R$)<input id="pSubR"></label>
         </div>
@@ -437,16 +439,16 @@ const money=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFraction
 
 /* ---------- Parâmetros ---------- */
 const DEF={
-  v:6,
+  v:7,
   rates:[{ate:2000,t:4.75},{ate:2640,t:5.00},{ate:3200,t:5.25},{ate:3800,t:5.50},{ate:4400,t:6.00},{ate:4700,t:6.50},{ate:5000,t:7.00},{ate:9600,t:8.16},{ate:13000,t:10.50}],
   red:0.5, nne:0.25, sbpe:11.19, cotaF:80, cotaSac:70, cotaPrice:50, mip:0.0082, dfi:0.0071, admF:25, admS:25, admIsento:2640, tr:0,
   tetos:{p750:275000,p300:270000,p100:245000,p0:210000}, t3:400000, t4:600000,
-  curva:'1750:51900, 1800:50507, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3500:2700, 3700:1900, 4000:1500',
-  subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
+  curva:'1750:51900, 1800:50507, 2000:45500, 2500:22660, 2865:10023, 3291:3697, 3400:2797, 3700:1900, 4000:1500',
+  zeraMin:false, subMax:55000, subMaxN:65000, subMin:1500, unip:70, subRendaMax:4000
 };
 let P;
 try{P=JSON.parse(localStorage.getItem('scp-params'))}catch(e){P=null}
-if(!P||P.v!==6)P=JSON.parse(JSON.stringify(DEF));
+if(!P||P.v!==7)P=JSON.parse(JSON.stringify(DEF));
 const UFS={AC:'N',AL:'NE',AP:'N',AM:'N',BA:'NE',CE:'NE',DF:'CO',ES:'SE',GO:'CO',MA:'NE',MT:'CO',MS:'CO',MG:'SE',PA:'N',PB:'NE',PR:'S',PE:'NE',PI:'NE',RJ:'SE',RN:'NE',RS:'S',RO:'N',RR:'N',SC:'S',SP:'SE',SE:'NE',TO:'N'};
 const PORTES={p750:'Mais de 750 mil habitantes',p300:'De 300 mil a 750 mil',p100:'De 100 mil a 300 mil',p0:'Menos de 100 mil'};
 const MIPF=[[25,1],[30,1.036],[35,1.317],[40,1.66],[45,2.54],[50,4.84],[55,7.865],[60,12.71],[65,24.2],[70,36.3],[200,54.5]];
@@ -548,7 +550,7 @@ function compute(s){
     let v=interp(P.curva,s.renda)||0;
     v=Math.min(v,R.reg==='N'?P.subMaxN:P.subMax);
     if(R.unip)v*=1-P.unip/100;
-    R.desc=v>=P.subMin?Math.round(v*100)/100:0;
+    R.desc=(P.zeraMin&&v<P.subMin)?0:Math.round(v*100)/100;
   }
   R.cota=fgts?P.cotaF:(s.sis==='SAC'?P.cotaSac:P.cotaPrice);
   R.adm=fgts?(s.renda<=P.admIsento?0:P.admF):P.admS;
@@ -640,7 +642,7 @@ function renderResult(s,R){
   const sum=k=>R.rows.reduce((a,r)=>a+r[k],0);
   const lines=[
     ['Valor do imóvel',BRL(s.valor)],['Prazo Máximo',`${R.prazoMax} meses`],['Sistema de Amortização',s.sis+(s.origem==='FGTS'?' FGTS':'')],
-    ['Cota máx. financiamento',`${R.cota}%`],['Valor de entrada',BRL(R.entrada)],['Desconto',BRL(R.desc)+(R.desc&&R.unip?' (unipessoal, −70%)':'')],
+    ['Cota máx. financiamento',`${R.cota}%`],['Valor de entrada',BRL(R.entrada)],['Desconto',BRL(R.desc)+(R.desc&&R.unip?' (unipessoal, −70%)':'')+(R.desc>0&&R.desc<P.subMin?` <span class="low">abaixo de ${BRL(P.subMin)}</span>`:'')],
     ['Prazo',`${R.n} meses`],['Valor de Financiamento',BRL(R.fin)],['Limitado por',R.lim],['Apólice de Seguro','68880']
   ];
   $('enqTit').textContent=R.enq;
@@ -705,7 +707,7 @@ function renderParams(){
   $('pNne').value=String(P.nne).replace('.',',');$('pAdmI').value=money(P.admIsento);
   $('pT750').value=money(P.tetos.p750);$('pT300').value=money(P.tetos.p300);$('pT100').value=money(P.tetos.p100);$('pT0').value=money(P.tetos.p0);
   $('pT3').value=money(P.t3);$('pT4').value=money(P.t4);
-  $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
+  $('pCurva').value=P.curva;$('pSubMax').value=`${P.subMax} / ${P.subMaxN}`;$('pSubMin').value=P.subMin;$('pZera').checked=!!P.zeraMin;$('pUnip').value=P.unip;$('pSubR').value=P.subRendaMax;
 }
 function collectParams(){
   document.querySelectorAll('#pRates input').forEach(el=>{const v=num(el.value);if(isFinite(v))P.rates[el.dataset.r][el.dataset.k]=v;});
@@ -714,7 +716,7 @@ function collectParams(){
   g('pRed','red');g('pSbpe','sbpe');g('pCotaF','cotaF');g('pMip','mip');g('pDfi','dfi');g('pTr','tr');
   const cs2=$('pCotaS').value.split('/').map(num);if(isFinite(cs2[0]))P.cotaSac=cs2[0];if(isFinite(cs2[1]))P.cotaPrice=cs2[1];
   const ad=$('pAdm').value.split('/').map(num);if(isFinite(ad[0]))P.admF=ad[0];if(isFinite(ad[1]))P.admS=ad[1];
-  g('pNne','nne');g('pAdmI','admIsento');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');g('pUnip','unip');g('pSubR','subRendaMax');
+  g('pNne','nne');g('pAdmI','admIsento');g('pT3','t3');g('pT4','t4');g('pSubMin','subMin');P.zeraMin=$('pZera').checked;g('pUnip','unip');g('pSubR','subRendaMax');
   [['pT750','p750'],['pT300','p300'],['pT100','p100'],['pT0','p0']].forEach(([id,k])=>{const v=num($(id).value);if(isFinite(v))P.tetos[k]=v;});
   P.curva=$('pCurva').value.trim();
   const sm=$('pSubMax').value.split('/').map(num);if(isFinite(sm[0]))P.subMax=sm[0];if(isFinite(sm[1]))P.subMaxN=sm[1];
