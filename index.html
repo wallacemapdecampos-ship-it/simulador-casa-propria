@@ -688,7 +688,8 @@ function compute(s){
     let v=(interp(P.curva,s.renda)||0)*((P.fatorDesc||{})[s.porte]||1);
     v=Math.min(v,R.reg==='N'?P.subMaxN:P.subMax);
     if(R.unip)v*=1-P.unip/100;
-    R.desc=(P.zeraMin&&v<P.subMin)?0:Math.round(v*100)/100;
+    // A Caixa usa o desconto em reais inteiros, sem centavos (1.630,13 -> 1.630,00).
+    R.desc=(P.zeraMin&&v<P.subMin)?0:Math.floor(v+1e-9);
   }
   R.cota=fgts?P.cotaF:(s.sis==='SAC'?P.cotaSac:P.cotaPrice);
   R.adm=fgts?(s.renda<=P.admIsento?0:P.admF):P.admS;
