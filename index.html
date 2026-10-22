@@ -749,6 +749,8 @@ function stepError(n,s,R){
 /* ---------- Render ---------- */
 function update(){
   const s=read(), R=compute(s);
+  // Última simulação: a aba "Preencher simulação" do Assistente (mesmo site) usa a cidade e o valor do imóvel.
+  try{if(s.valor>0&&$('cidade').value.trim())localStorage.setItem('scp-ultima',JSON.stringify({cidade:$('cidade').value.trim(),valor:s.valor,renda:s.renda,em:Date.now()}));}catch(e){}
   $('fgtsChecks').hidden=s.origem!=='FGTS'; $('depBox').hidden=s.origem!=='FGTS';
   // pactuação
   const sum=s.parts.reduce((a,p)=>a+(p.p||0),0);
